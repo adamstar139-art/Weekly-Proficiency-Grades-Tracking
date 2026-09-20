@@ -285,10 +285,20 @@ st.set_page_config(
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap');
-html, body, [class*="css"], div, span, button, input, select {
-    font-family: 'Cairo', sans-serif !important;
+html, body, .stApp {
+    font-family: 'Cairo', sans-serif;
     direction: rtl;
     text-align: right;
+}
+
+/* تطبيق خط القاهرة بأمان دون إلغاء خط أيقونات Streamlit */
+p, h1, h2, h3, h4, h5, h6, label, button, input, textarea, [data-testid="stMarkdownContainer"] {
+    font-family: 'Cairo', sans-serif !important;
+}
+
+/* الحفاظ على خط الأيقونات لتجنب تداخل النصوص مثل keyboard_arrow */
+[data-testid="stIcon"], [class*="material-symbols"], [class*="Material"], [class*="icon"], i {
+    font-family: 'Material Symbols Outlined', 'Material Icons' !important;
 }
 .stApp {
     background-color: #F8FAFC;
