@@ -577,9 +577,9 @@ elif page == "🏫 إدارة المدرسة وتقارير أولياء الأ�
                 with st.expander(f"👤 {item['name']} ({item['grade']} - فصل {item['class']}) | جوال ولي الأمر: {item['phone']}"):
                     st.write(f"**رقم الهوية:** {item['id']}")
                     st.write(f"**النسبة المئوية / الدرجة:** {item['score']}%" if item['is_absent'] == 0 else "**الحالة:** غائب ⚪")
-                    st.info(f"💬 **نص الرسالة الموجهة:**
+                    st.info(f"""💬 **نص الرسالة الموجهة:**
 
-{item['message']}")
+{item['message']}""")
                     
                     btn_col1, btn_col2, btn_col3 = st.columns(3)
                     
@@ -634,4 +634,3 @@ elif page == "🏫 إدارة المدرسة وتقارير أولياء الأ�
                 if update_student_phone_db(selected_st_row["id"], new_phone):
                     st.success(f"✅ تم تحديث رقم جوال الطالب {st_select} بنجاح في قاعدة البيانات السحابية!")
                     st.rerun()
-
