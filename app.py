@@ -523,7 +523,7 @@ with st.sidebar.expander("💬 إعدادات WhatsApp Direct API (إرسال ت
     st.caption("💡 باستخدام هذه الإعدادات، يتم إرسال رسائل الواتساب مباشرة للطلاب في الخلفية فور الضغط على زر الإرسال بنقرة واحدة.")
 
 with st.sidebar.expander("📱 إعدادات Mora SMS"):
-    mora_user = st.text_input("اسم المستخدم / الرقم:", value="966560229124", key="mora_u")
+    mora_user = st.text_input("اسم المستخدم / الرقم:", value="966508634881", key="mora_u")
     mora_pass = st.text_input("كلمة المرور:", value="THA@0508634881", type="password", key="mora_p")
     mora_sender = st.text_input("اسم المرسل المعتمد:", value="THAGHR-S", key="mora_s")
     mora_otp = st.text_input("كود التحقق / OTP (إذا طلب):", value="", key="mora_otp_input")
