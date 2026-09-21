@@ -2,12 +2,13 @@ import streamlit as st
 import pandas as pd
 from datetime import date, datetime, timedelta
 import io
+import copy
 import urllib.parse
 import requests
 
-### =========================================================
-### 0. ربط قاعدة البيانات السحابية الدائمة (Supabase Cloud)
-### =========================================================
+# =========================================================
+# 0. ربط قاعدة البيانات السحابية الدائمة (Supabase Cloud)
+# =========================================================
 try:
     from supabase import create_client, Client
     _SUPABASE_LIB = True
@@ -44,10 +45,10 @@ def get_supabase():
 def supabase_ready():
     return get_supabase() is not None
 
-### =========================================================
-### 1. دوال قاعدة البيانات (Supabase Integration)
-### =========================================================
-@st.cache_data(ttl=30, show_spinner=False)
+# =========================================================
+# 1. دوال قاعدة البيانات (Supabase Integration)
+# =========================================================
+@st.cache_data(ttl=15, show_spinner=False)
 def fetch_all_grades_db(term, week):
     sb = get_supabase()
     if sb is None:
@@ -61,9 +62,12 @@ def fetch_all_grades_db(term, week):
 def save_grades_to_db(term, week, grades_list):
     sb = get_supabase()
     if sb is None:
+        st.error("⚠️ لم يتم الاتصال بـ Supabase. يرجى التأكد من إعداد Secrets.")
         return False
     try:
-        sb.table("thaghr_grades").delete().eq("term", term).eq("week", week).execute()
+        for g in grades_list:
+            sb.table("thaghr_grades").delete().eq("student_id", str(g['student_id'])).eq("term", term).eq("week", week).execute()
+        
         payload = [{
             "student_id": str(g['student_id']),
             "term": term,
@@ -96,24 +100,25 @@ def fetch_student_phones_db():
     except Exception:
         return {}
 
-def update_student_phone_db(student_id, phone):
+def update_student_phone_db(student_id, new_phone):
     sb = get_supabase()
     if sb is None:
         return False
     try:
         sb.table("thaghr_students_info").upsert({
             "student_id": str(student_id),
-            "phone": str(phone)
+            "phone": str(new_phone).strip()
         }).execute()
-        st.cache_data.clear()
         return True
     except Exception as ex:
-        st.error(f"حدث خطأ أثناء تحديث رقم الجوال: {ex}")
+        st.error(f"خطأ في تحديث رقم الجوال: {ex}")
         return False
+    finally:
+        st.cache_data.clear()
 
-### =========================================================
-### 2. دوال الإرسال والربط عبر API (WhatsApp Direct + Mora SMS)
-### =========================================================
+# =========================================================
+# 2. دوال إرسال الرسائل (Mora SMS + WhatsApp Gateway API)
+# =========================================================
 def send_whatsapp_direct_api(phone, message, instance_id="", api_token=""):
     if not api_token or not instance_id:
         return False, "يرجى إدخال Instance ID و API Token الخاص بخدمة WhatsApp Gateway في القائمة الجانبية."
@@ -146,7 +151,7 @@ def send_mora_sms(phone, message, username, password, sender_name, otp_code=""):
         phone_clean = "966" + phone_clean[1:]
     elif phone_clean.startswith("5"):
         phone_clean = "966" + phone_clean
-        
+
     url = "https://mora-sa.com/api/v1/sendsms"
     payload = {
         "username": username,
@@ -172,13 +177,10 @@ def send_bulk_messages(students_list, channel="sms", mora_creds={}, wa_creds={})
         phone = st_item['phone']
         msg = st_item['message']
         if channel == "wa_api":
-            status, resp = send_whatsapp_direct_api(
-                phone, msg, wa_creds.get("instance_id", ""), wa_creds.get("api_token", "")
-            )
+            status, resp = send_whatsapp_direct_api(phone, msg, wa_creds.get("instance_id", ""), wa_creds.get("api_token", ""))
         else:
-            status, resp = send_mora_sms(
-                phone, msg, mora_creds.get("username", ""), mora_creds.get("password", ""), mora_creds.get("sender", ""), mora_creds.get("otp", "")
-            )
+            status, resp = send_mora_sms(phone, msg, mora_creds.get("username", ""), mora_creds.get("password", ""), mora_creds.get("sender", ""), mora_creds.get("otp", ""))
+        
         if status:
             succ += 1
         else:
@@ -221,9 +223,9 @@ def generate_parent_message(student_name, score, is_absent):
             f"نشكر لكم حسن المتابعة والاهتمام، ونرجو الاستمرار في هذا الدعم المتبادل للحفاظ على هذا المستوى المتفوق. مع تحياتنا متوسطة الثغر النموذجية الأهلية."
         )
 
-### =========================================================
-### 3. قائمة الطلاب الأساسية
-### =========================================================
+# =========================================================
+# 3. قائمة الطلاب الأساسية
+# =========================================================
 STUDENTS_DB_GRADES = {
     "الأول المتوسط": {
         1: [
@@ -415,10 +417,9 @@ STUDENTS_DB_GRADES = {
         ]
     }
 }
-
-### =========================================================
-### 4. إعداد واجهة التطبيق والتنسيق العربي
-### =========================================================
+# =========================================================
+# 4. إعداد واجهة التطبيق والتنسيق العربي
+# =========================================================
 st.set_page_config(
     page_title="برنامج رصد الدرجات - متوسطة الثغر النموذجية الأهلية",
     page_icon="🏫",
@@ -428,58 +429,86 @@ st.set_page_config(
 
 st.markdown("""
 <style>
-    @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap');
-    html, body, [class*="css"] {
-        font-family: 'Tajawal', sans-serif;
-        direction: rtl;
-        text-align: right;
-    }
-    .main-header {
-        background: linear-gradient(135deg, #0F172A 0%, #1E293B 100%);
-        color: white;
-        padding: 24px;
-        border-radius: 12px;
-        text-align: center;
-        margin-bottom: 20px;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-    }
-    .student-card {
-        background-color: #F8FAFC;
-        padding: 10px 15px;
-        border-radius: 8px;
-        border-right: 4px solid #3B82F6;
-        margin-bottom: 8px;
-    }
-    .status-badge-ok {
-        background-color: #DCFCE7;
-        color: #166534;
-        padding: 6px 12px;
-        border-radius: 20px;
-        font-weight: bold;
-        font-size: 13px;
-        display: inline-block;
-    }
-    .status-badge-off {
-        background-color: #FEE2E2;
-        color: #991B1B;
-        padding: 6px 12px;
-        border-radius: 20px;
-        font-weight: bold;
-        font-size: 13px;
-        display: inline-block;
-    }
+@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap');
+html, body, .stApp {
+    font-family: 'Cairo', sans-serif;
+    direction: rtl;
+    text-align: right;
+}
+
+/* تطبيق خط القاهرة بأمان دون إلغاء خط أيقونات Streamlit */
+p, h1, h2, h3, h4, h5, h6, label, button, input, textarea, [data-testid="stMarkdownContainer"] {
+    font-family: 'Cairo', sans-serif !important;
+}
+
+/* الحفاظ على خط الأيقونات لتجنب تداخل النصوص مثل keyboard_arrow */
+[data-testid="stIcon"], [class*="material-symbols"], [class*="Material"], [class*="icon"], i {
+    font-family: 'Material Symbols Outlined', 'Material Icons' !important;
+}
+.stApp {
+    background-color: #F8FAFC;
+}
+.national-day-banner {
+    background: linear-gradient(135deg, #046A38 0%, #004B23 100%);
+    color: #FFFFFF;
+    padding: 18px;
+    border-radius: 12px;
+    text-align: center;
+    margin-bottom: 20px;
+    box-shadow: 0 4px 12px rgba(4, 106, 56, 0.2);
+    border: 2px solid #D4AF37;
+}
+.national-day-title {
+    font-size: 22px;
+    font-weight: 800;
+    color: #FFFFFF;
+    margin-bottom: 4px;
+}
+.national-day-sub {
+    font-size: 14px;
+    color: #F3F4F6;
+    font-weight: 600;
+}
+.status-badge-ok {
+    background-color: #DCFCE7;
+    color: #15803D;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-weight: 700;
+    font-size: 13px;
+    display: inline-block;
+}
+.status-badge-off {
+    background-color: #FEE2E2;
+    color: #B91C1C;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-weight: 700;
+    font-size: 13px;
+    display: inline-block;
+}
+.student-card {
+    background: white;
+    padding: 12px 16px;
+    border-radius: 8px;
+    border-right: 4px solid #1E3C72;
+    margin-bottom: 8px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
 </style>
 """, unsafe_allow_html=True)
 
+# بنر اليوم الوطني وتحديث الهوية
 st.markdown("""
-<div class="main-header">
-    <h2>🏫 برنامج رصد درجات الإتقان الأسبوعية ونظام إشعارات أولياء الأمور</h2>
-    <h4>متوسطة الثغر النموذجية الأهلية</h4>
+<div class="national-day-banner">
+    <div class="national-day-title">🇸🇦 نحلم ونحقق - اليوم الوطني السعودي 🌴⚔️</div>
+    <div class="national-day-sub">مدرسة متوسطة الثغر النموذجية الأهلية - نظام رصد درجات الإتقان الأسبوعية</div>
 </div>
 """, unsafe_allow_html=True)
 
-### الشريط الجانبي
+# الشريط الجانبي
 st.sidebar.title("📌 القائمة الرئيسية")
+
 if supabase_ready():
     st.sidebar.markdown('<div class="status-badge-ok">🟢 متصل بقاعدة بيانات Supabase الدائمة</div>', unsafe_allow_html=True)
 else:
@@ -495,16 +524,16 @@ with st.sidebar.expander("💬 إعدادات WhatsApp Direct API (إرسال ت
 
 with st.sidebar.expander("📱 إعدادات Mora SMS"):
     mora_user = st.text_input("اسم المستخدم / الرقم:", value="966508634881", key="mora_u")
-    mora_pass = st.text_input("كلمة المرور / API Key:", value="THA@0508634881", type="password", key="mora_p")
+    mora_pass = st.text_input("كلمة المرور:", value="THA@0508634881", type="password", key="mora_p")
     mora_sender = st.text_input("اسم المرسل المعتمد:", value="THAGHR-S", key="mora_s")
     mora_otp = st.text_input("كود التحقق / OTP (إذا طلب):", value="", key="mora_otp_input")
 
 st.sidebar.markdown("---")
 page = st.sidebar.radio("اختر الصفحة:", ["📝 صفحة الرصد", "🏫 إدارة المدرسة وتقارير أولياء الأمور"])
 
-### =========================================================
-### الصفحة الأولى: صفحة الرصد (RECORDING SHEET)
-### =========================================================
+# =========================================================
+# الصفحة الأولى: صفحة الرصد (RECORDING SHEET)
+# =========================================================
 if page == "📝 صفحة الرصد":
     st.subheader("📝 صفحة رصد درجات الإتقان الأسبوعية")
     
@@ -594,12 +623,12 @@ if page == "📝 صفحة الرصد":
         df_display = pd.DataFrame(table_rows)
         st.dataframe(df_display, use_container_width=True)
 
-### =========================================================
-### الصفحة الثانية: إدارة المدرسة وتقارير أولياء الأمور
-### =========================================================
+# =========================================================
+# الصفحة الثانية: إدارة المدرسة وتقارير أولياء الأمور
+# =========================================================
 elif page == "🏫 إدارة المدرسة وتقارير أولياء الأمور":
     st.subheader("🏫 إدارة المدرسة وإرسال وتقارير أولياء الأمور")
-    
+
     col_w1, col_w2 = st.columns(2)
     with col_w1:
         weeks = [f"الأسبوع {i}" for i in range(1, 19)]
@@ -703,7 +732,9 @@ elif page == "🏫 إدارة المدرسة وتقارير أولياء الأ�
                 with st.expander(f"👤 {item['name']} ({item['grade']} - فصل {item['class']}) | جوال ولي الأمر: {item['phone']}"):
                     st.write(f"**رقم الهوية:** {item['id']}")
                     st.write(f"**النسبة المئوية / الدرجة:** {item['score']}%" if item['is_absent'] == 0 else "**الحالة:** غائب ⚪")
-                    st.info(f"💬 **نص الرسالة الموجهة:**\n\n{item['message']}")
+                    st.info(f"""💬 **نص الرسالة الموجهة:**
+
+{item['message']}""")
                     
                     btn_col1, btn_col2, btn_col3 = st.columns(3)
                     
