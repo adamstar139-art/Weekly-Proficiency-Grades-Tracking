@@ -836,52 +836,74 @@ elif page == "🏫 إدارة المدرسة وتقارير أولياء الأ�
                 wa_manual_url = create_whatsapp_web_url(item['phone'], item['message'])
                 score_str = f"{item['score']}%" if item['is_absent'] == 0 else "غائب ⚪"
                 
-                expander_label = f"👤 {item['name']}  •  {item['grade']}  •  فصل: {item['class']}"
-                with st.expander(expander_label):
-                    st.markdown(f'''
-                    <div style="background-color: #ffffff; border-radius: 10px; padding: 16px; border: 1px solid #e2e8f0; margin-bottom: 14px;">
-                        <div style="display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; font-size: 13px;">
+                # بطاقة الطالب التفاعلية المباشرة بديل ممتاز وشفاف يحل تداخل st.expander نهائياً
+                st.markdown(f'''
+                <details style="
+                    background-color: #ffffff;
+                    border: 1px solid #cbd5e1;
+                    border-radius: 12px;
+                    padding: 14px 18px;
+                    margin-bottom: 12px;
+                    box-shadow: 0 2px 6px rgba(0,0,0,0.03);
+                    direction: rtl;
+                    text-align: right;
+                    font-family: 'Cairo', sans-serif;
+                ">
+                    <summary style="
+                        font-size: 16px;
+                        font-weight: 800;
+                        color: #005A2B;
+                        cursor: pointer;
+                        outline: none;
+                        line-height: 2.2;
+                        padding: 4px 0;
+                    ">
+                        👤 {item['name']} &nbsp;&nbsp;•&nbsp;&nbsp; {item['grade']} &nbsp;&nbsp;•&nbsp;&nbsp; فصل: {item['class']}
+                    </summary>
+                    <div style="margin-top: 14px; border-top: 1px solid #f1f5f9; padding-top: 14px;">
+                        <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; font-size: 13px;">
                             <span style="background: #f1f5f9; color: #334155; padding: 5px 12px; border-radius: 6px; font-weight: 700; border: 1px solid #cbd5e1;">🆔 الهوية: {item['id']}</span>
                             <span style="background: #e0f2fe; color: #0369a1; padding: 5px 12px; border-radius: 6px; font-weight: 700; border: 1px solid #bae6fd;">📊 الدرجة: {score_str}</span>
                             <span style="background: #fef3c7; color: #92400e; padding: 5px 12px; border-radius: 6px; font-weight: 700; border: 1px solid #fde68a;">📱 الجوال: {item['phone']}</span>
                         </div>
-                        <div style="background-color: #f8fafc; border-right: 4px solid #005A2B; padding: 14px 18px; border-radius: 8px; color: #0f172a; font-size: 14px; line-height: 1.8; margin-bottom: 16px; word-wrap: break-word;">
+                        <div style="background-color: #f8fafc; border-right: 4px solid #005A2B; padding: 14px 18px; border-radius: 8px; color: #0f172a; font-size: 14px; line-height: 1.8; margin-bottom: 14px; word-wrap: break-word;">
                             <b style="color: #005A2B;">💬 نص الرسالة الموجهة لولي الأمر:</b><br/>
                             {item['message']}
                         </div>
                     </div>
+                </details>
+                ''', unsafe_allow_html=True)
+                
+                btn_col1, btn_col2, btn_col3 = st.columns([1, 1, 1])
+                
+                with btn_col1:
+                    if st.button("💬 إرسال واتساب تلقائي", key=f"wa_dir_{item['id']}_{idx_st}"):
+                        with st.spinner("جاري الإرسال المباشر..."):
+                            ok, resp = send_whatsapp_direct_api(item['phone'], item['message'], wa_instance, wa_token)
+                            if ok:
+                                st.success(f"✅ {resp}")
+                            else:
+                                st.error(f"❌ {resp}")
+                    
+                with btn_col2:
+                    st.markdown(f'''
+                    <a href="{wa_manual_url}" target="_blank" style="text-decoration:none;">
+                        <div style="background-color:#25D366; color:white; padding:8px 12px; border-radius:8px; text-align:center; font-weight:700; font-size:13px; line-height:1.5; display:block; border: 1px solid #1da851;">
+                            🌐 فتح بالواتساب
+                        </div>
+                    </a>
                     ''', unsafe_allow_html=True)
-                    
-                    btn_col1, btn_col2, btn_col3 = st.columns([1, 1, 1])
-                    
-                    with btn_col1:
-                        if st.button("💬 إرسال واتساب تلقائي", key=f"wa_dir_{item['id']}_{idx_st}"):
-                            with st.spinner("جاري الإرسال المباشر..."):
-                                ok, resp = send_whatsapp_direct_api(item['phone'], item['message'], wa_instance, wa_token)
-                                if ok:
-                                    st.success(f"✅ {resp}")
-                                else:
-                                    st.error(f"❌ {resp}")
-                        
-                    with btn_col2:
-                        st.markdown(f'''
-                        <a href="{wa_manual_url}" target="_blank" style="text-decoration:none;">
-                            <div style="background-color:#25D366; color:white; padding:8px 12px; border-radius:8px; text-align:center; font-weight:700; font-size:13px; line-height:1.5; display:block; border: 1px solid #1da851;">
-                                🌐 فتح بالواتساب
-                            </div>
-                        </a>
-                        ''', unsafe_allow_html=True)
 
-                    with btn_col3:
-                        if st.button("📱 إرسال SMS (Mora)", key=f"sms_dir_{item['id']}_{idx_st}"):
-                            with st.spinner("جاري الإرسال..."):
-                                status, msg_resp = send_mora_sms(
-                                    item['phone'], item['message'], username=mora_user, password=mora_pass, sender_name=mora_sender, otp_code=mora_otp
-                                )
-                                if status:
-                                    st.success(f"✅ {msg_resp}")
-                                else:
-                                    st.error(f"❌ تعذر الإرسال: {msg_resp}")
+                with btn_col3:
+                    if st.button("📱 إرسال SMS (Mora)", key=f"sms_dir_{item['id']}_{idx_st}"):
+                        with st.spinner("جاري الإرسال..."):
+                            status, msg_resp = send_mora_sms(
+                                item['phone'], item['message'], username=mora_user, password=mora_pass, sender_name=mora_sender, otp_code=mora_otp
+                            )
+                            if status:
+                                st.success(f"✅ {msg_resp}")
+                            else:
+                                st.error(f"❌ تعذر الإرسال: {msg_resp}")
 
     with tab1: show_category_tab(cat_red, "فئة أقل من 50%")
     with tab2: show_category_tab(cat_blue, "فئة 50% - 75%")
