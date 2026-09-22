@@ -5,6 +5,8 @@ import io
 import copy
 import urllib.parse
 import requests
+import plotly.express as px
+import plotly.graph_objects as go
 
 # =========================================================
 # 0. ربط قاعدة البيانات السحابية الدائمة (Supabase Cloud)
@@ -116,6 +118,20 @@ def update_student_phone_db(student_id, new_phone):
     finally:
         st.cache_data.clear()
 
+def delete_student_from_db(student_id):
+    sb = get_supabase()
+    if sb is None:
+        return False
+    try:
+        sb.table("thaghr_students_info").delete().eq("student_id", str(student_id)).execute()
+        sb.table("thaghr_grades").delete().eq("student_id", str(student_id)).execute()
+        return True
+    except Exception as ex:
+        st.error(f"خطأ أثناء حذف الطالب من قاعدة البيانات: {ex}")
+        return False
+    finally:
+        st.cache_data.clear()
+
 # =========================================================
 # 2. دوال إرسال الرسائل (Mora SMS + WhatsApp Gateway API)
 # =========================================================
@@ -151,7 +167,7 @@ def send_mora_sms(phone, message, username, password, sender_name, otp_code=""):
         phone_clean = "966" + phone_clean[1:]
     elif phone_clean.startswith("5"):
         phone_clean = "966" + phone_clean
-
+        
     url = "https://mora-sa.com/api/v1/sendsms"
     payload = {
         "username": username,
@@ -180,7 +196,6 @@ def send_bulk_messages(students_list, channel="sms", mora_creds={}, wa_creds={})
             status, resp = send_whatsapp_direct_api(phone, msg, wa_creds.get("instance_id", ""), wa_creds.get("api_token", ""))
         else:
             status, resp = send_mora_sms(phone, msg, mora_creds.get("username", ""), mora_creds.get("password", ""), mora_creds.get("sender", ""), mora_creds.get("otp", ""))
-        
         if status:
             succ += 1
         else:
@@ -224,9 +239,9 @@ def generate_parent_message(student_name, score, is_absent):
         )
 
 # =========================================================
-# 3. قائمة الطلاب الأساسية
+# 3. قائمة الطلاب الأساسية وإدارتها في Session State
 # =========================================================
-STUDENTS_DB_GRADES = {
+INITIAL_STUDENTS_DB = {
     "الأول المتوسط": {
         1: [
             {"id": "1167628468", "name": "ابراهيم بن محمد بن علي الوهيبي", "grade": "الأول المتوسط", "class": 1, "phone": "966504158122"},
@@ -417,6 +432,12 @@ STUDENTS_DB_GRADES = {
         ]
     }
 }
+
+if "students_db" not in st.session_state:
+    st.session_state["students_db"] = copy.deepcopy(INITIAL_STUDENTS_DB)
+
+STUDENTS_DB_GRADES = st.session_state["students_db"]
+
 # =========================================================
 # 4. إعداد واجهة التطبيق والتنسيق العربي
 # =========================================================
@@ -429,81 +450,56 @@ st.set_page_config(
 
 st.markdown("""
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap');
-html, body, .stApp {
-    font-family: 'Cairo', sans-serif;
-    direction: rtl;
-    text-align: right;
-}
-
-/* تطبيق خط القاهرة بأمان دون إلغاء خط أيقونات Streamlit */
-p, h1, h2, h3, h4, h5, h6, label, button, input, textarea, [data-testid="stMarkdownContainer"] {
-    font-family: 'Cairo', sans-serif !important;
-}
-
-/* الحفاظ على خط الأيقونات لتجنب تداخل النصوص مثل keyboard_arrow */
-[data-testid="stIcon"], [class*="material-symbols"], [class*="Material"], [class*="icon"], i {
-    font-family: 'Material Symbols Outlined', 'Material Icons' !important;
-}
-.stApp {
-    background-color: #F8FAFC;
-}
-.national-day-banner {
-    background: linear-gradient(135deg, #046A38 0%, #004B23 100%);
-    color: #FFFFFF;
-    padding: 18px;
-    border-radius: 12px;
-    text-align: center;
-    margin-bottom: 20px;
-    box-shadow: 0 4px 12px rgba(4, 106, 56, 0.2);
-    border: 2px solid #D4AF37;
-}
-.national-day-title {
-    font-size: 22px;
-    font-weight: 800;
-    color: #FFFFFF;
-    margin-bottom: 4px;
-}
-.national-day-sub {
-    font-size: 14px;
-    color: #F3F4F6;
-    font-weight: 600;
-}
-.status-badge-ok {
-    background-color: #DCFCE7;
-    color: #15803D;
-    padding: 6px 12px;
-    border-radius: 20px;
-    font-weight: 700;
-    font-size: 13px;
-    display: inline-block;
-}
-.status-badge-off {
-    background-color: #FEE2E2;
-    color: #B91C1C;
-    padding: 6px 12px;
-    border-radius: 20px;
-    font-weight: 700;
-    font-size: 13px;
-    display: inline-block;
-}
-.student-card {
-    background: white;
-    padding: 12px 16px;
-    border-radius: 8px;
-    border-right: 4px solid #1E3C72;
-    margin-bottom: 8px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-}
+    @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap');
+    
+    html, body, [class*="css"], div, span, h1, h2, h3, h4, h5, h6, p {
+        font-family: 'Cairo', sans-serif !important;
+        direction: rtl !important;
+        text-align: right !important;
+    }
+    .main {
+        background-color: #f8fafc;
+    }
+    .stButton>button {
+        border-radius: 8px;
+        font-weight: 700;
+        font-family: 'Cairo', sans-serif;
+    }
+    .status-badge-ok {
+        background-color: #dcfce7;
+        color: #15803d;
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-weight: bold;
+        font-size: 13px;
+        text-align: center;
+    }
+    .status-badge-off {
+        background-color: #fee2e2;
+        color: #b91c1c;
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-weight: bold;
+        font-size: 13px;
+        text-align: center;
+    }
+    .report-card {
+        background: white;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 20px;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    }
+    .report-title {
+        color: #1e293b;
+        font-weight: 800;
+        font-size: 20px;
+        margin-bottom: 15px;
+        border-bottom: 2px solid #3b82f6;
+        padding-bottom: 8px;
+    }
 </style>
-""", unsafe_allow_html=True)
-
-# بنر اليوم الوطني وتحديث الهوية
-st.markdown("""
-<div class="national-day-banner">
-    <div class="national-day-title">🇸🇦 نحلم ونحقق - اليوم الوطني السعودي 🌴⚔️</div>
-    <div class="national-day-sub">مدرسة متوسطة الثغر النموذجية الأهلية - نظام رصد درجات الإتقان الأسبوعية</div>
-</div>
 """, unsafe_allow_html=True)
 
 # الشريط الجانبي
@@ -529,7 +525,12 @@ with st.sidebar.expander("📱 إعدادات Mora SMS"):
     mora_otp = st.text_input("كود التحقق / OTP (إذا طلب):", value="", key="mora_otp_input")
 
 st.sidebar.markdown("---")
-page = st.sidebar.radio("اختر الصفحة:", ["📝 صفحة الرصد", "🏫 إدارة المدرسة وتقارير أولياء الأمور"])
+page = st.sidebar.radio("اختر الصفحة:", [
+    "📝 صفحة الرصد", 
+    "🏫 إدارة المدرسة وتقارير أولياء الأمور",
+    "🁻 طباعة التقارير والتحليلات",
+    "👥 إدارة الطلاب (إضافة / حذف / نقل)"
+])
 
 # =========================================================
 # الصفحة الأولى: صفحة الرصد (RECORDING SHEET)
@@ -543,7 +544,8 @@ if page == "📝 صفحة الرصد":
     with col2:
         grade = st.selectbox("الصف الدراسي:", ["الأول المتوسط", "الثاني المتوسط", "الثالث المتوسط"])
     with col3:
-        class_num = st.selectbox("الفصل / الشعبة:", [1, 2, 3])
+        available_classes = list(STUDENTS_DB_GRADES.get(grade, {}).keys()) or [1, 3, 4]
+        class_num = st.selectbox("الفصل / الشعبة:", available_classes)
     with col4:
         weeks = [f"الأسبوع {i}" for i in range(1, 19)]
         week = st.selectbox("الأسبوع المستهدف:", weeks)
@@ -569,7 +571,7 @@ if page == "📝 صفحة الرصد":
                 default_sc = float(saved_rec.get("score", 0.0))
                 default_abs = bool(saved_rec.get("is_absent", 0))
 
-                col_name, col_score, col_absent = st.columns([3, 2, 1])
+                col_name, col_score, col_absent = st.columns([1, 3, 4])
                 with col_name:
                     st.markdown(f'<div class="student-card">📌 <b>{idx}. {st_item["name"]}</b> <small style="color:#64748B;">({sid})</small></div>', unsafe_allow_html=True)
                 with col_score:
@@ -628,7 +630,7 @@ if page == "📝 صفحة الرصد":
 # =========================================================
 elif page == "🏫 إدارة المدرسة وتقارير أولياء الأمور":
     st.subheader("🏫 إدارة المدرسة وإرسال وتقارير أولياء الأمور")
-
+    
     col_w1, col_w2 = st.columns(2)
     with col_w1:
         weeks = [f"الأسبوع {i}" for i in range(1, 19)]
@@ -732,9 +734,7 @@ elif page == "🏫 إدارة المدرسة وتقارير أولياء الأ�
                 with st.expander(f"👤 {item['name']} ({item['grade']} - فصل {item['class']}) | جوال ولي الأمر: {item['phone']}"):
                     st.write(f"**رقم الهوية:** {item['id']}")
                     st.write(f"**النسبة المئوية / الدرجة:** {item['score']}%" if item['is_absent'] == 0 else "**الحالة:** غائب ⚪")
-                    st.info(f"""💬 **نص الرسالة الموجهة:**
-
-{item['message']}""")
+                    st.info(f"💬 **نص الرسالة الموجهة:**\n\n{item['message']}")
                     
                     btn_col1, btn_col2, btn_col3 = st.columns(3)
                     
@@ -781,7 +781,7 @@ elif page == "🏫 إدارة المدرسة وتقارير أولياء الأ�
         with col_p1:
             st_select = st.selectbox("اختر الطالب لتحديث رقم جوال ولي أمره:", df_reports_all["name"].tolist())
 
-        selected_st_row = df_reports_all[df_reports_all["name"] == st_select].iloc[0]
+        selected_st_row = df_reports_all[df_reports_all["name"] == st_select].iloc
 
         with col_p2:
             new_phone = st.text_input("رقم الجوال الجديد:", value=selected_st_row["phone"])
@@ -789,3 +789,540 @@ elif page == "🏫 إدارة المدرسة وتقارير أولياء الأ�
                 if update_student_phone_db(selected_st_row["id"], new_phone):
                     st.success(f"✅ تم تحديث رقم جوال الطالب {st_select} بنجاح في قاعدة البيانات السحابية!")
                     st.rerun()
+
+# =========================================================
+# الصفحة الثالثة: طباعة التقارير والتحليلات (جديدة)
+# =========================================================
+elif page == "🁻 طباعة التقارير والتحليلات":
+    st.title("🁻 مركز التقارير المطبوعة وتحليل النواتج")
+    st.markdown("اختر نوع التقرير المطلوب، وقم بتخصيص الخيارات لعرض التحليلات، التصدير إلى Excel وطباعة/تصدير PDF.")
+    
+    col_sel1, col_sel2 = st.columns(2)
+    with col_sel1:
+        rep_term = st.selectbox("اختر الفصل الدراسي للتقرير:", ["الفصل الدراسي الأول", "الفصل الدراسي الثاني"], key="rep_term_select")
+    with col_sel2:
+        rep_week = st.selectbox("اختر الأسبوع:", [f"الأسبوع {i}" for i in range(1, 19)], key="rep_week_select")
+
+    st.markdown("---")
+
+    # جلب درجات الأسبوع المختار
+    db_grades_list = fetch_all_grades_db(rep_term, rep_week)
+    db_grades_map = {str(g['student_id']): g for g in db_grades_list}
+    phone_db_map = fetch_student_phones_db()
+
+    # تجميع كلي للبيانات
+    master_records = []
+    for g_name, g_data in STUDENTS_DB_GRADES.items():
+        for c_num, s_list in g_data.items():
+            for s_item in s_list:
+                sid = str(s_item["id"])
+                rec = db_grades_map.get(sid, {})
+                sc = rec.get("score", None)
+                is_abs = rec.get("is_absent", 0)
+                phone = phone_db_map.get(sid, s_item.get("phone", ""))
+                
+                status_cat = "غير مرصود"
+                if is_abs == 1:
+                    status_cat = "غائب ⚪"
+                elif sc is not None:
+                    if sc < 50:
+                        status_cat = "ضعيف (<50%) 🔴"
+                    elif sc <= 75:
+                        status_cat = "متوسط (50-75%) 🔵"
+                    else:
+                        status_cat = "متميز (>75%) 🟢"
+                
+                master_records.append({
+                    "رقم الهوية": sid,
+                    "اسم الطالب": s_item["name"],
+                    "الصف الدراسي": g_name,
+                    "الفصل / الشعبة": f"فصل {c_num}",
+                    "الدرجة": sc if (sc is not None and is_abs == 0) else 0.0,
+                    "الحالة": status_cat,
+                    "غائب": "نعم" if is_abs == 1 else "لا",
+                    "رقم الجوال": phone
+                })
+                
+    df_master = pd.DataFrame(master_records)
+
+    # اختيار نوع التقرير
+    rep_type = st.radio(
+        "📋 اختر نوع التقرير المطلوب:",
+        ["📑 التقرير الشامل للمدرسة", "🏫 تقرير الصفوف", "🏛️ تقرير فصل محدد", "📊 تقرير تحليل النواتج والافتراق التحصيلي"],
+        horizontal=True
+    )
+
+    # دالة مساعدة لتوليد ملف Excel
+    def to_excel(df, sheet_name='التقرير'):
+        output = io.BytesIO()
+        with pd.ExcelWriter(output, engine='openpyxl') as writer:
+            df.to_excel(writer, index=False, sheet_name=sheet_name)
+        return output.getvalue()
+
+    # دالة مساعدة لتوليد صفحة HTML قابلة للطباعة PDF
+    def generate_html_report(title, subtitle, df_table, metrics_summary=None):
+        table_html = df_table.to_html(classes="styled-table", index=False)
+        metrics_html = ""
+        if metrics_summary:
+            metrics_html = '<div class="metrics-container">'
+            for k, v in metrics_summary.items():
+                metrics_html += f'<div class="metric-box"><div class="metric-val">{v}</div><div class="metric-lbl">{k}</div></div>'
+            metrics_html += '</div>'
+
+        html_content = f"""<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <title>{title}</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap');
+        body {{
+            font-family: 'Cairo', sans-serif;
+            direction: rtl;
+            text-align: right;
+            padding: 30px;
+            background-color: #fff;
+            color: #1e293b;
+        }}
+        .header {{
+            text-align: center;
+            border-bottom: 3px double #0284c7;
+            padding-bottom: 15px;
+            margin-bottom: 25px;
+        }}
+        .header h1 {{
+            color: #0369a1;
+            margin: 0 0 8px 0;
+            font-size: 26px;
+        }}
+        .header h3 {{
+            color: #64748b;
+            margin: 0;
+            font-size: 16px;
+            font-weight: 600;
+        }}
+        .metrics-container {{
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 25px;
+            gap: 15px;
+        }}
+        .metric-box {{
+            background: #f0f9ff;
+            border: 1px solid #bae6fd;
+            border-radius: 8px;
+            padding: 12px 20px;
+            text-align: center;
+            flex: 1;
+        }}
+        .metric-val {{
+            font-size: 22px;
+            font-weight: 800;
+            color: #0369a1;
+        }}
+        .metric-lbl {{
+            font-size: 13px;
+            color: #475569;
+            font-weight: 600;
+        }}
+        .styled-table {{
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+            font-size: 14px;
+        }}
+        .styled-table th {{
+            background-color: #0284c7;
+            color: white;
+            padding: 10px;
+            border: 1px solid #0284c7;
+            text-align: center;
+        }}
+        .styled-table td {{
+            padding: 8px 12px;
+            border: 1px solid #e2e8f0;
+            text-align: center;
+        }}
+        .styled-table tr:nth-child(even) {{
+            background-color: #f8fafc;
+        }}
+        .footer {{
+            margin-top: 40px;
+            text-align: center;
+            font-size: 12px;
+            color: #94a3b8;
+            border-top: 1px solid #e2e8f0;
+            padding-top: 10px;
+        }}
+        @media print {{
+            .no-print {{ display: none; }}
+            body {{ padding: 0; }}
+        }}
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🏫 متوسطة الثغر النموذجية الأهلية</h1>
+        <h3>{title} - {subtitle}</h3>
+        <p style="font-size:12px; color:#64748b; margin-top:5px;">تاريخ التقرير: {datetime.now().strftime('%Y-%m-%d')}</p>
+    </div>
+    {metrics_html}
+    {table_html}
+    <div class="footer">
+        تم استخراج هذا التقرير آلياً من نظام إدارة درجات مدرسة الثغر النموذجية
+    </div>
+</body>
+</html>"""
+        return html_content
+
+    # 1. التقرير الشامل للمدرسة
+    if rep_type == "📑 التقرير الشامل للمدرسة":
+        st.markdown("<div class='report-card'>", unsafe_allow_html=True)
+        st.markdown("<div class='report-title'>📑 التقرير الشامل لجميع الصفوف والفصول</div>", unsafe_allow_html=True)
+        st.caption(f"عرض نتائج كافة الطلاب لـ ({rep_term} - {rep_week})")
+        
+        tot_std = len(df_master)
+        avg_score = df_master["الدرجة"].mean() if tot_std > 0 else 0
+        tot_abs = (df_master["غائب"] == "نعم").sum()
+        
+        m_c1, m_c2, m_c3, m_c4 = st.columns(4)
+        m_c1.metric("👥 إجمالي الطلاب", f"{tot_std} طالب")
+        m_c2.metric("📈 متوسط درجات المدرسة", f"{avg_score:.1f}%")
+        m_c3.metric("⚪ إجمالي الغائبين", f"{tot_abs} طالب")
+        m_c4.metric("🏆 نسبة الحضور", f"{((tot_std - tot_abs)/tot_std*100):.1f}%" if tot_std > 0 else "0%")
+        
+        st.dataframe(df_master, use_container_width=True)
+
+        # رسم بياني للمدرسة
+        fig_school = px.histogram(
+            df_master, 
+            x="الحالة", 
+            title="📊 توزيع مستويات الطلاب على مستوى المدرسة",
+            color="الحالة",
+            color_discrete_map={
+                "متميز (>75%) 🟢": "#22c55e",
+                "متوسط (50-75%) 🔵": "#3b82f6",
+                "ضعيف (<50%) 🔴": "#ef4444",
+                "غائب ⚪": "#94a3b8"
+            }
+        )
+        st.plotly_chart(fig_school, use_container_width=True)
+
+        col_ex1, col_ex2 = st.columns(2)
+        with col_ex1:
+            excel_data = to_excel(df_master, sheet_name="التقرير الشامل")
+            st.download_button("📥 تصدير التقرير الشامل إلى Excel", data=excel_data, file_name=f"Comprehensive_Report_{rep_week}.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", use_container_width=True)
+        with col_ex2:
+            html_rep = generate_html_report("التقرير الشامل للمدرسة", f"{rep_term} - {rep_week}", df_master, {
+                "إجمالي الطلاب": f"{tot_std}",
+                "متوسط المدرسة": f"{avg_score:.1f}%",
+                "الطلاب الغائبون": f"{tot_abs}"
+            })
+            st.download_button("🖨️ طباعة / تصدير التقرير الشامل PDF", data=html_rep, file_name=f"Comprehensive_Report_{rep_week}.html", mime="text/html", use_container_width=True)
+        st.markdown("</div>", unsafe_allow_html=True)
+
+    # 2. تقرير الصفوف
+    elif rep_type == "🏫 تقرير الصفوف":
+        st.markdown("<div class='report-card'>", unsafe_allow_html=True)
+        col_hdr, col_drop = st.columns([3])
+        with col_hdr:
+            st.markdown("<div class='report-title'>🏫 تقرير الصفوف الدراسية</div>", unsafe_allow_html=True)
+        with col_drop:
+            selected_grade = st.selectbox("اختر الصف الدراسي المراد عرض تقريره:", ["الأول المتوسط", "الثاني المتوسط", "الثالث المتوسط"], key="rep_grade_select")
+
+        df_grade = df_master[df_master["الصف الدراسي"] == selected_grade]
+        st.caption(f"تقرير نتائج {selected_grade} | {rep_term} - {rep_week}")
+
+        g_tot = len(df_grade)
+        g_avg = df_grade["الدرجة"].mean() if g_tot > 0 else 0
+        g_abs = (df_grade["غائب"] == "نعم").sum()
+
+        mg1, mg2, mg3 = st.columns(3)
+        mg1.metric(f"👥 طلاب {selected_grade}", f"{g_tot} طالب")
+        mg2.metric("📈 متوسط درجة الصف", f"{g_avg:.1f}%")
+        mg3.metric("⚪ عدد الغائبين بالصف", f"{g_abs} طالب")
+
+        st.dataframe(df_grade, use_container_width=True)
+
+        # رسم بياني للصف
+        fig_grade = px.pie(
+            df_grade, 
+            names="الحالة", 
+            title=f"🎯 الرسم البياني لتوزيع المستويات في {selected_grade}",
+            hole=0.4,
+            color="الحالة",
+            color_discrete_map={
+                "متميز (>75%) 🟢": "#22c55e",
+                "متوسط (50-75%) 🔵": "#3b82f6",
+                "ضعيف (<50%) 🔴": "#ef4444",
+                "غائب ⚪": "#94a3b8"
+            }
+        )
+        st.plotly_chart(fig_grade, use_container_width=True)
+
+        col_gx1, col_gx2 = st.columns(2)
+        with col_gx1:
+            st.download_button("📥 تصدير تقرير الصف إلى Excel", data=to_excel(df_grade, sheet_name=selected_grade), file_name=f"Report_{selected_grade}_{rep_week}.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", use_container_width=True)
+        with col_gx2:
+            html_g_rep = generate_html_report(f"تقرير {selected_grade}", f"{rep_term} - {rep_week}", df_grade, {
+                "إجمالي طلاب الصف": f"{g_tot}",
+                "متوسط درجات الصف": f"{g_avg:.1f}%",
+                "عدد الغائبين": f"{g_abs}"
+            })
+            st.download_button("🖨️ طباعة / تصدير تقرير الصف PDF", data=html_g_rep, file_name=f"Report_{selected_grade}_{rep_week}.html", mime="text/html", use_container_width=True)
+        st.markdown("</div>", unsafe_allow_html=True)
+
+    # 3. تقرير فصل محدد
+    elif rep_type == "🏛️ تقرير فصل محدد":
+        st.markdown("<div class='report-card'>", unsafe_allow_html=True)
+        col_hdr2, col_d1, col_d2 = st.columns([2, 1.5, 1.5])
+        with col_hdr2:
+            st.markdown("<div class='report-title'>🏛️ تقرير فصل محدد</div>", unsafe_allow_html=True)
+        with col_d1:
+            cls_grade = st.selectbox("اختر الصف:", ["الأول المتوسط", "الثاني المتوسط", "الثالث المتوسط"], key="cls_g_select")
+        with col_d2:
+            available_classes_rep = list(STUDENTS_DB_GRADES.get(cls_grade, {}).keys()) or [1, 3, 4]
+            cls_num = st.selectbox("اختر الفصل/الشعبة:", available_classes_rep, key="cls_n_select")
+
+        df_class = df_master[(df_master["الصف الدراسي"] == cls_grade) & (df_master["الفصل / الشعبة"] == f"فصل {cls_num}")]
+        st.caption(f"تقرير نتائج {cls_grade} - فصل ({cls_num}) | {rep_term} - {rep_week}")
+
+        c_tot = len(df_class)
+        c_avg = df_class["الدرجة"].mean() if c_tot > 0 else 0
+        c_abs = (df_class["غائب"] == "نعم").sum()
+
+        mc1, mc2, mc3 = st.columns(3)
+        mc1.metric(f"👥 طلاب فصل ({cls_num})", f"{c_tot} طالب")
+        mc2.metric("📈 متوسط الدرجة للفصل", f"{c_avg:.1f}%")
+        mc3.metric("⚪ غياب الفصل", f"{c_abs} طالب")
+
+        st.dataframe(df_class, use_container_width=True)
+
+        fig_cls = px.bar(
+            df_class, 
+            x="اسم الطالب", 
+            y="الدرجة", 
+            color="الحالة",
+            title=f"📊 درجات طلاب {cls_grade} - فصل ({cls_num})",
+            color_discrete_map={
+                "متميز (>75%) 🟢": "#22c55e",
+                "متوسط (50-75%) 🔵": "#3b82f6",
+                "ضعيف (<50%) 🔴": "#ef4444",
+                "غائب ⚪": "#94a3b8"
+            }
+        )
+        st.plotly_chart(fig_cls, use_container_width=True)
+
+        col_cx1, col_cx2 = st.columns(2)
+        with col_cx1:
+            st.download_button(f"📥 تصدير تقرير فصل ({cls_num}) إلى Excel", data=to_excel(df_class, sheet_name=f"فصل_{cls_num}"), file_name=f"Report_{cls_grade}_Class{cls_num}.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", use_container_width=True)
+        with col_cx2:
+            html_c_rep = generate_html_report(f"تقرير {cls_grade} - فصل ({cls_num})", f"{rep_term} - {rep_week}", df_class, {
+                "عدد الطلاب": f"{c_tot}",
+                "متوسط الفصل": f"{c_avg:.1f}%",
+                "عدد الغائبين": f"{c_abs}"
+            })
+            st.download_button(f"🖨️ طباعة / تصدير تقرير فصل ({cls_num}) PDF", data=html_c_rep, file_name=f"Report_{cls_grade}_Class{cls_num}.html", mime="text/html", use_container_width=True)
+        st.markdown("</div>", unsafe_allow_html=True)
+
+    # 4. تقرير تحليل النواتج
+    elif rep_type == "📊 تقرير تحليل النواتج والافتراق التحصيلي":
+        st.markdown("<div class='report-card'>", unsafe_allow_html=True)
+        st.markdown("<div class='report-title'>📊 تقرير تحليل نواتج التعلم والافتراق التحصيلي</div>", unsafe_allow_html=True)
+        st.caption(f"تحليل إحصائي شامل ومقارنة أداء الصفوف لـ ({rep_term} - {rep_week})")
+
+        analysis_rows = []
+        for g_name in ["الأول المتوسط", "الثاني المتوسط", "الثالث المتوسط"]:
+            df_g = df_master[df_master["الصف الدراسي"] == g_name]
+            g_tot = len(df_g)
+            if g_tot == 0:
+                continue
+            
+            weak_cnt = len(df_g[df_g["الحالة"] == "ضعيف (<50%) 🔴"])
+            mid_cnt = len(df_g[df_g["الحالة"] == "متوسط (50-75%) 🔵"])
+            exc_cnt = len(df_g[df_g["الحالة"] == "متميز (>75%) 🟢"])
+            abs_cnt = len(df_g[df_g["غائب"] == "نعم"])
+            avg_sc = df_g["الدرجة"].mean()
+
+            analysis_rows.append({
+                "الصف الدراسي": g_name,
+                "إجمالي الطلاب": g_tot,
+                "المتوسط العام": f"{avg_sc:.1f}%",
+                "الطلاب الضعاف (<50%)": f"{weak_cnt} ({weak_cnt/g_tot*100:.1f}%)",
+                "الطلاب المتوسطون (50-75%)": f"{mid_cnt} ({mid_cnt/g_tot*100:.1f}%)",
+                "الطلاب المتميزون (>75%)": f"{exc_cnt} ({exc_cnt/g_tot*100:.1f}%)",
+                "الغائبون": f"{abs_cnt} ({abs_cnt/g_tot*100:.1f}%)"
+            })
+
+        df_outcomes = pd.DataFrame(analysis_rows)
+        st.subheader("📈 جدول المقارنة الإحصائية لنواتج التعلم بين الصفوف:")
+        st.dataframe(df_outcomes, use_container_width=True)
+
+        # رسم بياني لمقارنة نواتج التعلم
+        chart_data = []
+        for g_name in ["الأول المتوسط", "الثاني المتوسط", "الثالث المتوسط"]:
+            df_g = df_master[df_master["الصف الدراسي"] == g_name]
+            g_tot = len(df_g)
+            if g_tot > 0:
+                chart_data.append({"الصف": g_name, "الفئة": "ضعاف (<50%)", "العدد": len(df_g[df_g["الحالة"] == "ضعيف (<50%) 🔴"])})
+                chart_data.append({"الصف": g_name, "الفئة": "متوسطون (50-75%)", "العدد": len(df_g[df_g["الحالة"] == "متوسط (50-75%) 🔵"])})
+                chart_data.append({"الصف": g_name, "الفئة": "متميزون (>75%)", "العدد": len(df_g[df_g["الحالة"] == "متميز (>75%) 🟢"])})
+                chart_data.append({"الصف": g_name, "الفئة": "غائبون", "العدد": len(df_g[df_g["غائب"] == "نعم"])})
+
+        df_chart = pd.DataFrame(chart_data)
+        if not df_chart.empty:
+            fig_outcomes = px.bar(
+                df_chart, 
+                x="الصف", 
+                y="العدد", 
+                color="الفئة", 
+                barmode="group",
+                title="📊 مقارنة توزيع الفئات التحصيلية بين المرحلة المتوسطة",
+                color_discrete_map={
+                    "متميزون (>75%)": "#22c55e",
+                    "متوسطون (50-75%)": "#3b82f6",
+                    "ضعاف (<50%)": "#ef4444",
+                    "غائبون": "#94a3b8"
+                }
+            )
+            st.plotly_chart(fig_outcomes, use_container_width=True)
+
+        col_ox1, col_ox2 = st.columns(2)
+        with col_ox1:
+            st.download_button("📥 تصدير تقرير تحليل النواتج إلى Excel", data=to_excel(df_outcomes, sheet_name="تحليل النواتج"), file_name=f"Outcomes_Analysis_{rep_week}.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", use_container_width=True)
+        with col_ox2:
+            html_o_rep = generate_html_report("تقرير تحليل نواتج التعلم", f"{rep_term} - {rep_week}", df_outcomes, {
+                "الفصل الدراسي": rep_term,
+                "الأسبوع المستهدف": rep_week,
+                "عدد الصفوف المحللة": f"{len(df_outcomes)}"
+            })
+            st.download_button("🖨️ طباعة / تصدير تقرير تحليل النواتج PDF", data=html_o_rep, file_name=f"Outcomes_Analysis_{rep_week}.html", mime="text/html", use_container_width=True)
+        st.markdown("</div>", unsafe_allow_html=True)
+
+# =========================================================
+# الصفحة الرابعة: إدارة الطلاب (إضافة / حذف / نقل) (جديدة)
+# =========================================================
+elif page == "👥 إدارة الطلاب (إضافة / حذف / نقل)":
+    st.title("👥 صفحة إدارة بيانات الطلاب")
+    st.markdown("يمكنك من خلال هذه الصفحة **إضافة طالب جديد**، **حذف طالب**، أو **نقل طالب من فصل إلى آخر** بكل سهولة مع الحفظ المباشر.")
+    
+    tab_add, tab_del, tab_transfer = st.tabs([
+        "➕ إضافة طالب جديد",
+        "🗑️ حذف طالب",
+        "🔄 نقل طالب بين الفصول"
+    ])
+
+    # 1. إضافة طالب جديد
+    with tab_add:
+        st.subheader("➕ إضافة طالب جديد إلى المدرسة")
+        with st.form("add_student_form", clear_on_submit=True):
+            col_a1, col_a2 = st.columns(2)
+            with col_a1:
+                new_id = st.text_input("رقم الهوية / الرقم الأكاديمي (10 أرقام):", placeholder="مثال: 1122334455")
+                new_name = st.text_input("اسم الطالب الرباعي:", placeholder="مثال: أحمد محمد علي الغامدي")
+            with col_a2:
+                new_grade = st.selectbox("الصف الدراسي:", ["الأول المتوسط", "الثاني المتوسط", "الثالث المتوسط"], key="add_g_select")
+                new_class = st.selectbox("الفصل / الشعبة:", [1, 3, 4], key="add_c_select")
+                new_phone = st.text_input("رقم جوال ولي الأمر:", placeholder="مثال: 966501234567")
+            
+            btn_add = st.form_submit_button("💾 حفظ وإضافة الطالب إلى القائمة")
+            
+            if btn_add:
+                if not new_id or not new_name or not new_phone:
+                    st.error("⚠️ يرجى ملء كافة البيانات المطلوبة (الهوية، الاسم، الجوال).")
+                else:
+                    new_id_clean = str(new_id).strip()
+                    # إضافة إلى st.session_state
+                    if new_grade not in st.session_state["students_db"]:
+                        st.session_state["students_db"][new_grade] = {}
+                    if new_class not in st.session_state["students_db"][new_grade]:
+                        st.session_state["students_db"][new_grade][new_class] = []
+                    
+                    # التحقق من عدم التكرار
+                    existing_ids = [str(st_item["id"]) for g in st.session_state["students_db"].values() for c in g.values() for st_item in c]
+                    if new_id_clean in existing_ids:
+                        st.warning("⚠️ رقم الهوية هذا موجود بالفعل لطالب آخر!")
+                    else:
+                        st.session_state["students_db"][new_grade][new_class].append({
+                            "id": new_id_clean,
+                            "name": new_name.strip(),
+                            "grade": new_grade,
+                            "class": new_class,
+                            "phone": str(new_phone).strip()
+                        })
+                        # تحديث Supabase إذا كان متصلاً
+                        update_student_phone_db(new_id_clean, new_phone.strip())
+                        st.success(f"✅ تم إضافة الطالب **{new_name}** بنجاح إلى **{new_grade} - فصل ({new_class})**!")
+                        st.rerun()
+
+    # 2. حذف طالب
+    with tab_del:
+        st.subheader("🗑️ حذف طالب من قاعدة البيانات")
+        
+        col_d1, col_d2 = st.columns(2)
+        with col_d1:
+            del_grade = st.selectbox("اختر الصف الدراسي للطالب:", ["الأول المتوسط", "الثاني المتوسط", "الثالث المتوسط"], key="del_g_select")
+        with col_d2:
+            avail_classes_del = list(st.session_state["students_db"].get(del_grade, {}).keys()) or [1, 3, 4]
+            del_class = st.selectbox("اختر الفصل / الشعبة:", avail_classes_del, key="del_c_select")
+            
+        current_class_students = st.session_state["students_db"].get(del_grade, {}).get(del_class, [])
+        if not current_class_students:
+            st.info("لا يوجد طلاب مسجلون في هذا الفصل حالياً.")
+        else:
+            student_options = {f"{s['name']} (هوية: {s['id']})": s for s in current_class_students}
+            selected_st_label = st.selectbox("اختر الطالب المراد حذفه:", list(student_options.keys()))
+            selected_st_obj = student_options[selected_st_label]
+            
+            st.error(f"⚠️ **تنبيه:** سيتم حذف الطالب **{selected_st_obj['name']}** نهائياً من المدرسة وقاعدة البيانات.")
+            if st.button("🗑️ تأكيد حذف الطالب نهائياً"):
+                # حذف من Session State
+                st.session_state["students_db"][del_grade][del_class] = [
+                    s for s in st.session_state["students_db"][del_grade][del_class] if str(s["id"]) != str(selected_st_obj["id"])
+                ]
+                # حذف من Supabase إذا كان متصلاً
+                delete_student_from_db(selected_st_obj["id"])
+                st.success(f"✅ تم حذف الطالب {selected_st_obj['name']} بنجاح.")
+                st.rerun()
+
+    # 3. نقل طالب بين الفصول
+    with tab_transfer:
+        st.subheader("🔄 نقل طالب من فصل إلى فصل آخر")
+        
+        col_t1, col_t2 = st.columns(2)
+        with col_t1:
+            src_grade = st.selectbox("من صف:", ["الأول المتوسط", "الثاني المتوسط", "الثالث المتوسط"], key="src_g_select")
+            avail_src_classes = list(st.session_state["students_db"].get(src_grade, {}).keys()) or [1, 3, 4]
+            src_class = st.selectbox("من فصل:", avail_src_classes, key="src_c_select")
+            
+            src_students = st.session_state["students_db"].get(src_grade, {}).get(src_class, [])
+            if src_students:
+                tr_student_map = {f"{s['name']} ({s['id']})": s for s in src_students}
+                selected_tr_label = st.selectbox("اختر الطالب المراد نقله:", list(tr_student_map.keys()))
+                selected_tr_obj = tr_student_map[selected_tr_label]
+            else:
+                selected_tr_obj = None
+                st.info("لا يوجد طلاب في هذا الفصل لنقلهم.")
+                
+        with col_t2:
+            target_grade = st.selectbox("إلى صف:", ["الأول المتوسط", "الثاني المتوسط", "الثالث المتوسط"], key="tgt_g_select")
+            target_class = st.selectbox("إلى فصل:", [1, 3, 4], key="tgt_c_select")
+            
+        if selected_tr_obj and st.button("🔄 تأكيد نقل الطالب الآن"):
+            # 1. إزالة من المكان الحالي
+            st.session_state["students_db"][src_grade][src_class] = [
+                s for s in st.session_state["students_db"][src_grade][src_class] if str(s["id"]) != str(selected_tr_obj["id"])
+            ]
+            # 2. إضافة إلى المكان الجديد
+            if target_grade not in st.session_state["students_db"]:
+                st.session_state["students_db"][target_grade] = {}
+            if target_class not in st.session_state["students_db"][target_grade]:
+                st.session_state["students_db"][target_grade][target_class] = []
+                
+            updated_st = copy.deepcopy(selected_tr_obj)
+            updated_st["grade"] = target_grade
+            updated_st["class"] = target_class
+            
+            st.session_state["students_db"][target_grade][target_class].append(updated_st)
+            st.success(f"✅ تم نقل الطالب **{selected_tr_obj['name']}** بنجاح إلى **{target_grade} - فصل ({target_class})**!")
+            st.rerun()
