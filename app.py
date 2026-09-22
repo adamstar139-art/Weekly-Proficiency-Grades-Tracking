@@ -122,6 +122,13 @@ def print_button(label="🖨️ طباعة التقرير", button_id="print_btn
     """
     components.html(js_code, height=50)
 
+
+def render_clean_html(html_content):
+    """تنظيف كود HTML من أي مسافات بادئة لمنع ظهوره كأكواد في streamlit"""
+    lines = [line.strip() for line in html_content.splitlines() if line.strip()]
+    st.markdown("".join(lines), unsafe_allow_html=True)
+
+
 ### =========================================================
 ### 2. خدمات WhatsApp Direct API و Mora SMS
 ### =========================================================
@@ -320,42 +327,44 @@ st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap');
 
-/* تطبيق الخط والاتجاه الصحيح على التطبيق ككل بدون تدمير الهياكل الداخلية */
-html, body, .stApp {
-    font-family: 'Cairo', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif !important;
+/* تنسيقات العامة لمنع تداخل النصوص وارتفاع الأسطر */
+html, body, [class*="css"], div, span, p, label, button, input, select {
+    font-family: 'Cairo', sans-serif !important;
     direction: rtl !important;
     text-align: right !important;
-    background-color: #f8f9fa;
+    line-height: 1.8 !important;
 }
 
-/* ضبط ارتفاع الأسطر لمنع تداخل النصوص في كافة العناصر */
-h1, h2, h3, h4, h5, h6, p, div, span, label, input, button, select, textarea {
+/* ضبط العناوين والبطاقات لمنع التداخل */
+h1, h2, h3, h4, h5, h6 {
     font-family: 'Cairo', sans-serif !important;
     line-height: 1.6 !important;
+    margin-bottom: 8px !important;
+    padding-top: 4px !important;
 }
 
-/* تصحيح محاذاة العناوين والأزرار */
-.stButton > button {
-    font-family: 'Cairo', sans-serif !important;
-    font-weight: 700 !important;
-    border-radius: 8px !important;
+/* تنسيق بطاقات الإحصائيات Metrics */
+[data-testid="stMetric"] {
+    background-color: #f8fafc !important;
+    border: 1px solid #e2e8f0 !important;
+    padding: 12px 16px !important;
+    border-radius: 10px !important;
+    min-height: 90px !important;
 }
-
-/* تصحيح تداخل نصوص بطاقات الإحصائيات Metrics */
 [data-testid="stMetricValue"] {
-    font-size: 1.6rem !important;
-    font-weight: 700 !important;
-    line-height: 1.3 !important;
+    font-size: 1.4rem !important;
+    font-weight: 800 !important;
+    line-height: 1.5 !important;
+    color: #1e293b !important;
     margin-top: 4px !important;
 }
 [data-testid="stMetricLabel"] {
     font-size: 0.95rem !important;
-    font-weight: 600 !important;
-    line-height: 1.4 !important;
-    color: #495057 !important;
+    font-weight: 700 !important;
+    line-height: 1.5 !important;
+    color: #475569 !important;
 }
 
-/* شارات حالة الاتصال */
 .status-badge-ok {
     background-color: #d4edda;
     color: #155724;
@@ -377,60 +386,57 @@ h1, h2, h3, h4, h5, h6, p, div, span, label, input, button, select, textarea {
     border: 1px solid #f5c6cb;
 }
 
-/* حاوية التقرير القابل للطباعة على الشاشة وفي أوراق A4 */
+/* حاوية التقرير المطبوع */
 .report-paper {
-    background-color: #ffffff;
-    border: 1px solid #e0e0e0;
-    border-radius: 10px;
-    padding: 25px;
-    margin-top: 15px;
-    margin-bottom: 25px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    background-color: #ffffff !important;
+    border: 1px solid #cbd5e1 !important;
+    border-radius: 12px !important;
+    padding: 24px !important;
+    margin: 20px 0 !important;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.06) !important;
 }
 
-.report-header-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-bottom: 15px;
-    border-bottom: 2px solid #1f4e78;
-    padding-bottom: 10px;
+table.report-header-table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+    margin-bottom: 20px !important;
+    border-bottom: 2px solid #1f4e78 !important;
+    padding-bottom: 12px !important;
 }
-.report-header-table td {
+table.report-header-table td {
     border: none !important;
-    padding: 4px 8px !important;
-    vertical-align: middle;
+    padding: 6px 10px !important;
+    vertical-align: middle !important;
+    line-height: 1.6 !important;
+    font-size: 13px !important;
 }
 
-.report-title-box {
-    text-align: center;
-    background-color: #f1f5f9;
-    padding: 10px;
-    border-radius: 8px;
-    margin-bottom: 15px;
-    border: 1px solid #cbd5e1;
-}
-
-/* جداول التقارير المطبوعة - تمنع الجداول الفارغة والتداخل وتدعم A4 */
+/* جداول التقارير المطبوعة - تمنع تداخل النص بالجداول */
 table.printable-table {
     width: 100% !important;
     border-collapse: collapse !important;
-    margin-top: 10px !important;
+    margin-top: 15px !important;
     font-size: 13px !important;
     direction: rtl !important;
 }
 table.printable-table th {
     background-color: #1f4e78 !important;
     color: #ffffff !important;
-    padding: 10px 8px !important;
+    padding: 12px 8px !important;
     text-align: center !important;
-    font-weight: bold !important;
+    font-weight: 700 !important;
     border: 1px solid #1f4e78 !important;
+    line-height: 1.5 !important;
+    vertical-align: middle !important;
 }
 table.printable-table td {
-    border: 1px solid #d1d5db !important;
-    padding: 8px 6px !important;
+    border: 1px solid #cbd5e1 !important;
+    padding: 10px 8px !important;
     text-align: center !important;
-    color: #1f2937 !important;
+    color: #0f172a !important;
+    line-height: 1.6 !important;
+    vertical-align: middle !important;
+    font-size: 13px !important;
 }
 table.printable-table tr:nth-child(even) {
     background-color: #f8fafc !important;
@@ -438,7 +444,6 @@ table.printable-table tr:nth-child(even) {
 
 /* تنسيقات الطباعة الخاصة بـ @media print */
 @media print {
-    /* إخفاء القائمة الجانبية والأزرار وعناصر التحكم عند الطباعة */
     section[data-testid="stSidebar"], 
     header, 
     footer, 
@@ -450,7 +455,7 @@ table.printable-table tr:nth-child(even) {
     
     @page {
         size: A4 portrait;
-        margin: 10mm 12mm 10mm 12mm;
+        margin: 12mm 10mm 12mm 10mm;
     }
     
     body, .stApp, .main .block-container {
@@ -471,13 +476,13 @@ table.printable-table tr:nth-child(even) {
     table.printable-table th {
         background-color: #1f4e78 !important;
         color: white !important;
-        -webkit-print-color-adjust: exact;
-        print-color-adjust: exact;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
     }
     table.printable-table tr:nth-child(even) {
         background-color: #f1f5f9 !important;
-        -webkit-print-color-adjust: exact;
-        print-color-adjust: exact;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
     }
 }
 </style>
@@ -726,7 +731,7 @@ elif page == "🏫 إدارة المدرسة وتقارير أولياء الأ�
     </div>
     """
 
-    st.markdown(full_report_html, unsafe_allow_html=True)
+    render_clean_html(full_report_html)
 
     st.markdown("---")
 
@@ -815,7 +820,7 @@ elif page == "🏫 إدارة المدرسة وتقارير أولياء الأ�
         </div>
         """
 
-        st.markdown(class_report_html, unsafe_allow_html=True)
+        render_clean_html(class_report_html)
     else:
         st.warning("لا توجد بيانات متاحة لهذا الصف في الأسبوع المختار.")
 
