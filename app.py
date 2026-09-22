@@ -93,58 +93,99 @@ def fetch_student_phones_db():
     except Exception:
         return {}
 
-def update_student_phone_db(student_id, new_phone):
-    sb = get_supabase()
-    if sb is None:
-        return False
-    try:
-        sb.table("thaghr_students_info").upsert({
-            "student_id": str(student_id),
-            "phone": str(new_phone).strip()
-        }).execute()
-        return True
-    except Exception as ex:
-        st.error(f"خطأ في تحديث رقم الجوال: {ex}")
-        return False
-    finally:
-        st.cache_data.clear()
+### =========================================================
+### 1. دالة الترويسة السعودية باللون الأخضر (Saudi Identity Header)
+### =========================================================
+def render_saudi_header(page_title=""):
+    """عرض ترويسة باللون الأخضر بالهوية السعودية الرسمية لمدرسة الثغر النموذجية"""
+    header_html = f"""
+    <div style="
+        background: linear-gradient(135deg, #005027 0%, #006C35 50%, #004D25 100%);
+        color: #ffffff;
+        border-radius: 12px;
+        padding: 20px 25px;
+        margin-bottom: 25px;
+        border-bottom: 4px solid #D4AF37;
+        box-shadow: 0 6px 18px rgba(0, 108, 53, 0.25);
+        text-align: center;
+        direction: rtl;
+        font-family: 'Cairo', sans-serif;
+    ">
+        <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 15px;">
+            <div style="text-align: right;">
+                <div style="font-size: 13px; color: #E2E8F0; opacity: 0.95; font-weight: 600;">المملكة العربية السعودية • وزارة التعليم</div>
+                <div style="font-size: 22px; font-weight: 800; color: #FFFFFF; margin-top: 2px;">مدرسة الثغر النموذجية الأهلية المتوسطة</div>
+            </div>
+            <div style="
+                background: rgba(0, 0, 0, 0.2);
+                padding: 8px 20px;
+                border-radius: 25px;
+                border: 1px solid rgba(212, 175, 55, 0.6);
+                text-align: center;
+            ">
+                <div style="font-size: 17px; font-weight: 800; color: #FDE047;">🌴⚔️ برنامج لرصد درجات الإتقان الأسبوعي</div>
+                {f'<div style="font-size: 13px; color: #FFFFFF; font-weight: 600; margin-top:2px;">{page_title}</div>' if page_title else ''}
+            </div>
+            <div style="text-align: left; font-size: 13px; color: #E2E8F0; font-weight: 600;">
+                <div>إدارة التعليم بمحافظة جدة</div>
+                <div style="color: #FDE047; font-weight: bold; margin-top: 2px;">🇸🇦 الهوية الوطنية المعتمدة</div>
+            </div>
+        </div>
+    </div>
+    """
+    st.markdown(header_html, unsafe_allow_html=True)
 
 ### =========================================================
-### 1. دالة زر/أيقونة الطباعة المباشرة (Print Button Component)
+### 2. دالة زر/أيقونة الطباعة المباشرة (Print Button Component)
 ### =========================================================
 def print_button(label="🖨️ طباعة التقرير", button_id="print_btn"):
-    """مكون جافاسكريبت لإضافة زر طباعة مباشر عبر المتصفح"""
+    """مكون جافاسكريبت لإطلاق أمر الطباعة المباشر للنافذة الرئيسية window.parent.print()"""
     js_code = f"""
-        <button onclick="window.print()" style="
-            background-color: #1f77b4;
-            color: white;
-            padding: 10px 20px;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 15px;
-            font-weight: bold;
-            font-family: 'Cairo', sans-serif;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.12);
-            transition: all 0.2s ease;
-            width: 100%;
-        " onmouseover="this.style.backgroundColor='#145a8d'" onmouseout="this.style.backgroundColor='#1f77b4'">
-            {label}
-        </button>
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@600;700&display=swap" rel="stylesheet">
+        <style>
+            body {{ margin: 0; padding: 0; background: transparent; text-align: right; direction: rtl; }}
+            .print-btn-style {{
+                background-color: #006C35;
+                color: #ffffff;
+                padding: 10px 18px;
+                border: none;
+                border-radius: 8px;
+                cursor: pointer;
+                font-size: 15px;
+                font-weight: 700;
+                font-family: 'Cairo', sans-serif;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                gap: 8px;
+                box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+                transition: all 0.2s ease;
+                width: 100%;
+            }}
+            .print-btn-style:hover {{
+                background-color: #004d25;
+                box-shadow: 0 6px 12px rgba(0,0,0,0.2);
+            }}
+        </style>
+    </head>
+    <body>
+        <button class="print-btn-style" onclick="window.parent.print()">{label}</button>
+    </body>
+    </html>
     """
-    components.html(js_code, height=50)
+    components.html(js_code, height=52)
 
-def render_clean_html(html_content):
-    """تنظيف كود HTML من أي مسافات بادئة لمنع ظهوره كأكواد في Streamlit"""
-    lines = [line.strip() for line in html_content.splitlines() if line.strip()]
-    st.markdown("".join(lines), unsafe_allow_html=True)
+def render_clean_html(html_str):
+    """تنظيف وتجريد المسافات البادئة لضمان عدم تحول HTML إلى كتل كود نصية"""
+    lines = [line.strip() for line in html_str.strip().splitlines() if line.strip()]
+    cleaned_html = "".join(lines)
+    st.markdown(cleaned_html, unsafe_allow_html=True)
 
 ### =========================================================
-### 2. خدمات WhatsApp Direct API و Mora SMS
+### 3. خدمات WhatsApp Direct API و Mora SMS
 ### =========================================================
 def send_whatsapp_direct_api(phone, message, instance_id="", api_token=""):
     if not api_token or not instance_id:
@@ -233,7 +274,7 @@ def generate_parent_message(student_name, score, is_absent=False):
         return (
             f"المحترم ولي أمر الطالب/ {student_name}\n"
             f"السلام عليكم ورحمة الله وبركاته،،\n"
-            f"نحيطكم علماً بأن ابنكم كان غائباً عن اختبار التقييم الأسبوعي لهذا الأسبوع في مدرسة الثغر النموذجية الأهلية.\n"
+            f"نحيطكم علماً بأن ابنكم  غائباً عن اختبار التقييم الأسبوعي لهذا اليوم في مدرسة الثغر النموذجية الأهلية.\n"
             f"نرجو التواصل مع إدارة المدرسة لمتابعة حالة الطالب.\n"
             f"شاكرين حسن تعاونكم."
         )
