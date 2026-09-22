@@ -552,6 +552,75 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
+# 🎨 محدد الخطوط الشامل للمنصة والتقارير
+font_choice = st.sidebar.selectbox(
+    "🎨 اختر نوع الخط للمنصة والتقارير:",
+    [
+        "خط المراعي (Almarai) - الموصى به 🌟",
+        "خط تجوال (Tajawal) - أنيق وعصري",
+        "خط ألكسندريا (Alexandria) - حديث ومريح",
+        "خط القاهرة (Cairo) - كلاسيكي عريض"
+    ],
+    key="global_app_font_choice"
+)
+
+if "تجوال" in font_choice:
+    chosen_font = "'Tajawal', sans-serif"
+    font_import_url = "https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap"
+elif "ألكسندريا" in font_choice:
+    chosen_font = "'Alexandria', sans-serif"
+    font_import_url = "https://fonts.googleapis.com/css2?family=Alexandria:wght@400;600;700;800&display=swap"
+elif "القاهرة" in font_choice:
+    chosen_font = "'Cairo', sans-serif"
+    font_import_url = "https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap"
+else:
+    chosen_font = "'Almarai', sans-serif"
+    font_import_url = "https://fonts.googleapis.com/css2?family=Almarai:wght@300;400;700;800&display=swap"
+
+st.markdown(f"""
+<style>
+@import url('{font_import_url}');
+@import url('https://fonts.googleapis.com/css2?family=Almarai:wght@300;400;700;800&family=Tajawal:wght@400;500;700;800&family=Alexandria:wght@400;600;700;800&family=Cairo:wght@400;600;700;800&display=swap');
+
+html, body, [class*="css"], .stApp, .stMarkdown, p, h1, h2, h3, h4, h5, h6, span, label, input, button, select, textarea, div {{
+    font-family: {chosen_font} !important;
+    direction: rtl !important;
+}}
+
+/* تخصيص التقرير للطباعة والعرض المباشر */
+.report-paper, .print-full-section, .print-class-section {{
+    font-family: {chosen_font} !important;
+}}
+
+.report-header-table, .printable-table, .printable-table th, .printable-table td {{
+    font-family: {chosen_font} !important;
+}}
+
+.printable-table th {{
+    font-weight: 700 !important;
+    letter-spacing: -0.2px;
+    font-size: 13px !important;
+}}
+
+.printable-table td {{
+    font-weight: 500 !important;
+    font-size: 13px !important;
+}}
+
+/* تحسين بطاقة معاينة الرسائل */
+.msg-preview-card {{
+    font-family: {chosen_font} !important;
+    line-height: 1.8 !important;
+    font-size: 14px !important;
+}}
+
+/* تحسين الخطوط في عناصر المقياس Metrics */
+[data-testid="stMetricValue"], [data-testid="stMetricLabel"] {{
+    font-family: {chosen_font} !important;
+}}
+</style>
+""", unsafe_allow_html=True)
+
 # تطبيق اتجاه RTL بالكامل على مستوى الصفحة
 st.markdown("""
 <style>
