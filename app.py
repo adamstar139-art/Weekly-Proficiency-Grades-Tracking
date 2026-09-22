@@ -499,7 +499,7 @@ STUDENTS_DB_GRADES = {
 }
 
 ### =========================================================
-### 4. إعدادات الصفحة والتنسيقات المخصصة (Custom CSS & Print Setup)
+### 5. إعدادات الصفحة والتنسيقات المخصصة الشاملة (CSS & Print Setup)
 ### =========================================================
 st.set_page_config(
     page_title="منصة مدرسة الثغر النموذجية - تقارير الإتقان والرسائل",
@@ -508,25 +508,26 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# حل شامل لمشكلة تداخل النصوص والأيقونات في Streamlit والتصميم للطباعة
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap');
 
-html, body, [class*="css"], div, span, button, input, select {
+html, body, .stApp {
     font-family: 'Cairo', sans-serif !important;
-    direction: rtl;
-    text-align: right;
+    direction: rtl !important;
+    text-align: right !important;
+    background-color: #f8fafc;
 }
 
-/* إصلاح ارتفاع الأسطر لمنع تداخل النصوص */
-p, span, label, h1, h2, h3, h4, h5, h6 {
+/* إصلاح ارتفاء الأسطر لمنع تداخل النصوص كلياً */
+p, span, label, div, h1, h2, h3, h4, h5, h6 {
+    font-family: 'Cairo', sans-serif !important;
     line-height: 1.8 !important;
 }
 
-/* حل مشكلة تداخل الأيقونات مع النصوص داخل st.expander */
+/* حل تداخل الأيقونات والنصوص في القوائم المنسدلة st.expander */
 details summary, [data-testid="stExpander"] summary {
-    padding-right: 50px !important;
+    padding-right: 55px !important;
     padding-left: 15px !important;
     direction: rtl !important;
     text-align: right !important;
@@ -545,7 +546,7 @@ details summary p, [data-testid="stExpander"] summary p {
 [data-testid="stExpander"] summary svg, 
 [data-testid="stExpander"] summary span[data-testid="stExpanderToggleIcon"] {
     position: absolute !important;
-    right: 12px !important;
+    right: 15px !important;
     top: 50% !important;
     transform: translateY(-50%) !important;
 }
@@ -554,6 +555,31 @@ div[data-testid="stExpander"] div[data-testid="stMarkdownContainer"] {
     direction: rtl !important;
     text-align: right !important;
     line-height: 1.8 !important;
+}
+
+/* ضبط عناصر المدخلات والقوائم المنسدلة بدون تداخل */
+[data-testid="stSelectbox"] label p, [data-testid="stNumberInput"] label p {
+    font-weight: 700 !important;
+    color: #1e293b !important;
+    margin-bottom: 4px !important;
+}
+
+[data-testid="stSelectbox"] div[data-baseweb="select"] {
+    direction: rtl !important;
+    text-align: right !important;
+}
+
+[data-testid="stNumberInput"] input {
+    text-align: center !important;
+    font-weight: bold !important;
+}
+
+/* ضبط مربع الخيار Checkbox و Radio دون تداخل */
+[data-testid="stCheckbox"] label, [data-testid="stRadio"] label {
+    display: flex !important;
+    align-items: center !important;
+    gap: 10px !important;
+    direction: rtl !important;
 }
 
 /* تحسين الميتريكس والبطاقات */
@@ -607,7 +633,7 @@ div[data-testid="stExpander"] div[data-testid="stMarkdownContainer"] {
     width: 100%;
     border-collapse: collapse;
     margin-bottom: 15px;
-    border-bottom: 2px solid #1f4e78;
+    border-bottom: 2px solid #006C35;
     padding-bottom: 10px;
 }
 .report-header-table td {
@@ -625,56 +651,73 @@ table.printable-table {
     direction: rtl !important;
 }
 table.printable-table th {
-    background-color: #1f4e78 !important;
+    background-color: #006C35 !important;
     color: #ffffff !important;
     padding: 10px 8px !important;
     text-align: center !important;
     font-weight: bold !important;
-    border: 1px solid #1f4e78 !important;
+    border: 1px solid #006C35 !important;
 }
 table.printable-table td {
     border: 1px solid #d1d5db !important;
     padding: 8px 6px !important;
     text-align: center !important;
     color: #1f2937 !important;
+    vertical-align: middle !important;
 }
 table.printable-table tr:nth-child(even) {
     background-color: #f8fafc !important;
 }
 
-/* تنسيقات الطباعة الخاصة بـ @media print */
+/* قواعد الطباعة الشاملة عند الضغط على زر الطباعة @media print */
 @media print {
+    /* إخفاء القائمة الجانبية والأزرار وأدوات التحكم فقط */
     section[data-testid="stSidebar"], 
-    header, 
+    header[data-testid="stHeader"], 
     footer, 
     .stButton, 
     .no-print,
-    iframe {
+    [data-testid="stSelectbox"],
+    [data-testid="stRadio"],
+    [data-testid="stTab"] {
         display: none !important;
     }
     
     @page {
         size: A4 portrait;
-        margin: 10mm 12mm 10mm 12mm;
+        margin: 8mm 10mm 8mm 10mm;
     }
     
-    body, .stApp, .main .block-container {
+    body, .stApp, .main, .block-container {
         background-color: white !important;
         color: black !important;
         padding: 0 !important;
         margin: 0 !important;
         width: 100% !important;
+        overflow: visible !important;
     }
     
     .report-paper {
+        display: block !important;
+        visibility: visible !important;
         border: none !important;
         box-shadow: none !important;
         padding: 0 !important;
         margin: 0 !important;
+        width: 100% !important;
     }
     
+    table.printable-table {
+        width: 100% !important;
+        border-collapse: collapse !important;
+        page-break-inside: auto;
+    }
+    table.printable-table tr {
+        page-break-inside: avoid;
+        page-break-after: auto;
+    }
     table.printable-table th {
-        background-color: #1f4e78 !important;
+        background-color: #006C35 !important;
         color: white !important;
         -webkit-print-color-adjust: exact;
         print-color-adjust: exact;
@@ -699,10 +742,10 @@ else:
 st.sidebar.markdown("---")
 st.sidebar.subheader("📱 إعدادات البوابات والرسائل")
 
-with st.sidebar.expander("💬 إعدادات WhatsApp Direct API"):
+with st.sidebar.expander("💬 إعدادات WhatsApp Direct API (إرسال تلقائي دون فتح التطبيق)"):
     wa_instance = st.text_input("Instance ID:", value="", key="wa_inst_inp")
     wa_token = st.text_input("API Token:", value="", type="password", key="wa_tok_inp")
-    st.caption("💡 إرسال إشعارات الواتساب مباشرة لولي الأمر دون الحاجة لفتح تطبيق الواتساب.")
+    st.caption("💡 باستخدام هذه الإعدادات، يتم إرسال رسائل الواتساب مباشرة للطلاب في الخلفية فور الضغط على زر الإرسال بنقرة واحدة.")
 
 with st.sidebar.expander("📱 إعدادات Mora SMS"):
     mora_user = st.text_input("اسم المستخدم / الرقم:", value="966508634881", key="mora_u")
@@ -717,7 +760,8 @@ page = st.sidebar.radio("اختر الصفحة:", ["📝 صفحة الرصد", "
 ### الصفحة الأولى: صفحة الرصد (RECORDING SHEET)
 ### =========================================================
 if page == "📝 صفحة الرصد":
-    st.subheader("📝 صفحة رصد درجات الإتقان الأسبوعية")
+    # الترويسة السعودية باللون الأخضر
+    render_saudi_header("صفحة رصد درجات الإتقان الأسبوعية")
     
     col_sel1, col_sel2, col_sel3 = st.columns(3)
     with col_sel1:
@@ -734,7 +778,7 @@ if page == "📝 صفحة الرصد":
         weeks = [f"الأسبوع {i}" for i in range(1, 19)]
         selected_week = st.selectbox("اختر الأسبوع:", weeks)
     with col_w2:
-        st.write("") 
+        st.write("")
         st.info(f"📍 يتم الرصد لـ: **{selected_grade} (فصل {selected_class})** - **{selected_week}**")
 
     st.markdown("---")
@@ -743,7 +787,7 @@ if page == "📝 صفحة الرصد":
     db_grades_list = fetch_all_grades_db(selected_term, selected_week)
     db_grades_map = {str(g['student_id']): g for g in db_grades_list}
 
-    st.markdown(f"##### 📋 قائمة طلاب {selected_grade} - فصل ({selected_class}) | العدد: {len(students_list)} طالب")
+    st.markdown("##### 📋 قائمة الطلاب وتعديل الدرجات:")
     
     form_grades = []
     
@@ -753,14 +797,14 @@ if page == "📝 صفحة الرصد":
         default_score = float(saved_rec.get("score", 100.0))
         default_absent = bool(saved_rec.get("is_absent", 0))
 
-        c1, c2, c3, c4 = st.columns([1, 4, 2, 2])
+        c1, c2, c3, c4 = st.columns([1, 3, 2, 2])
         with c1:
             st.write(f"**#{idx+1}**")
         with c2:
-            st.markdown(f"**{student['name']}**<br/><span style='color:#6c757d; font-size:12px;'>رقم الهوية: {sid}</span>", unsafe_allow_html=True)
+            st.write(f"**{student['name']}**\n*(هوية: {sid})*")
         with c3:
             sc_val = st.number_input(
-                f"الدرجة",
+                f"الدرجة ({student['name']})",
                 min_value=0.0,
                 max_value=100.0,
                 value=default_score,
@@ -791,7 +835,8 @@ if page == "📝 صفحة الرصد":
 ### الصفحة الثانية: إدارة المدرسة وتقارير أولياء الأمور
 ### =========================================================
 elif page == "🏫 إدارة المدرسة وتقارير أولياء الأمور":
-    st.subheader("🏫 إدارة المدرسة وإرسال تقارير أولياء الأمور والطباعة")
+    # الترويسة السعودية باللون الأخضر
+    render_saudi_header("إدارة المدرسة وإرسال التقارير والطباعة")
 
     col_w1, col_w2 = st.columns(2)
     with col_w1:
@@ -818,9 +863,9 @@ elif page == "🏫 إدارة المدرسة وتقارير أولياء الأ�
                 sc = rec.get("score", None)
                 is_abs = rec.get("is_absent", 0)
 
-                final_score = float(sc) if (sc is not None) else 100.0
+                final_score = sc if (sc is not None and is_abs == 0) else 100.0
 
-                msg = generate_parent_message(s_item["name"], final_score, is_abs == 1)
+                msg = generate_parent_message(s_item["name"], final_score if is_abs == 0 else None, is_abs == 1)
 
                 row_dict = {
                     "id": sid,
@@ -828,7 +873,7 @@ elif page == "🏫 إدارة المدرسة وتقارير أولياء الأ�
                     "grade": g_name,
                     "class": c_num,
                     "phone": p_num,
-                    "score": final_score if is_abs == 0 else 0.0,
+                    "score": final_score,
                     "is_absent": is_abs,
                     "message": msg
                 }
@@ -861,8 +906,9 @@ elif page == "🏫 إدارة المدرسة وتقارير أولياء الأ�
     m3.metric("🟢 76% - 100%", f"{len(cat_green)} طالب")
     m4.metric("⚪ الغياب", f"{len(cat_gray)} طالب")
 
+    # توليد التقرير الشامل بصيغة HTML جاهزة وموثقة للطباعة والعرض
     today_str = datetime.now().strftime("%Y/%m/%d")
-
+    
     rows_html = ""
     for idx, s in enumerate(all_students_flat):
         status_txt = "غائب ⚪" if s['is_absent'] == 1 else ("متفوق 🟢" if s['score'] >= 76 else ("جيد 🔵" if s['score'] >= 50 else "يحتاج متابعة 🔴"))
@@ -890,7 +936,7 @@ elif page == "🏫 إدارة المدرسة وتقارير أولياء الأ�
                     <strong>مدرسة الثغر النموذجية الأهلية المتوسطة</strong>
                 </td>
                 <td style="width: 40%; text-align: center;">
-                    <h3 style="margin:0; color:#1f4e78; font-family:'Cairo'; font-weight:bold;">📋 التقرير الشامل لدرجات الإتقان</h3>
+                    <h3 style="margin:0; color:#006C35; font-family:'Cairo'; font-weight:bold;">📋 التقرير الشامل لدرجات الإتقان الأسبوعية</h3>
                     <div style="font-size: 13px; color:#475569; margin-top:4px;">{selected_term} - {selected_week}</div>
                 </td>
                 <td style="width: 30%; text-align: left; font-size: 12px; line-height: 1.4;">
