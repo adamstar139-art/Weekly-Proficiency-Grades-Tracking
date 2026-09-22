@@ -679,7 +679,7 @@ st.markdown("""
         padding: 6px 12px;
         border-radius: 8px;
         font-size: 12px;
-        font-weight: 700;
+        font-weight: 500;
         border: 1px solid #bbf7d0;
         text-align: center;
     }
