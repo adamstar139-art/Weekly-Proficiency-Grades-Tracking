@@ -102,21 +102,25 @@ def print_button(label="🖨️ طباعة التقرير", button_id="print_btn
         <button onclick="window.print()" style="
             background-color: #1f77b4;
             color: white;
-            padding: 8px 16px;
+            padding: 10px 20px;
             border: none;
-            border-radius: 6px;
+            border-radius: 8px;
             cursor: pointer;
             font-size: 15px;
+            font-weight: bold;
             font-family: 'Cairo', sans-serif;
             display: inline-flex;
             align-items: center;
+            justify-content: center;
             gap: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        ">
+            box-shadow: 0 4px 6px rgba(0,0,0,0.12);
+            transition: all 0.2s ease;
+            width: 100%;
+        " onmouseover="this.style.backgroundColor='#145a8d'" onmouseout="this.style.backgroundColor='#1f77b4'">
             {label}
         </button>
     """
-    components.html(js_code, height=45)
+    components.html(js_code, height=50)
 
 ### =========================================================
 ### 2. خدمات WhatsApp Direct API و Mora SMS
@@ -292,161 +296,188 @@ STUDENTS_DB_GRADES = {
         1: [
             {"id": "1163760935", "name": "احمد سامي بن احمد العمران", "grade": "الثاني المتوسط", "class": 1, "phone": "966551501503"},
             {"id": "1153756612", "name": "الوليد عبدالله بن ابراهيم المبدل", "grade": "الثاني المتوسط", "class": 1, "phone": "966505241627"},
-            {"id": "1164269209", "name": "ذياب بن محمد بن ذياب بن محمد ال مربط القحطاني", "grade": "الثاني المتوسط", "class": 1, "phone": "966561169999"},
             {"id": "1163187972", "name": "راكان سالم بن محمد بن مسفر القحطاني", "grade": "الثاني المتوسط", "class": 1, "phone": "966556609291"},
             {"id": "1171617069", "name": "سعود خالد عبدالله الحمد", "grade": "الثاني المتوسط", "class": 1, "phone": "966555242944"},
             {"id": "1163458878", "name": "سعود مشعل بن ابراهيم الشثري", "grade": "الثاني المتوسط", "class": 1, "phone": "966598887996"},
             {"id": "1167623758", "name": "سلطان عبدالله حسن القحطاني", "grade": "الثاني المتوسط", "class": 1, "phone": "966563484825"},
-            {"id": "1164769430", "name": "عبدالرحمن حمد بن محمد العريفي", "grade": "الثاني المتوسط", "class": 1, "phone": "966555556856"},
-            {"id": "1167893740", "name": "عبدالرحمن ربيع جابر خبراني", "grade": "الثاني المتوسط", "class": 1, "phone": "966535924655"},
-            {"id": "1159740032", "name": "عبدالعزيز سعود بن فهد العتيبي", "grade": "الثاني المتوسط", "class": 1, "phone": "966544155592"},
-            {"id": "1164747436", "name": "عبدالمجيد بن محمد بن مسعود ال عايض القحطاني", "grade": "الثاني المتوسط", "class": 1, "phone": "966555275591"},
-            {"id": "1160901128", "name": "فيصل بن عبدالله بن سعود بن عبدالعزيز الجميعة", "grade": "الثاني المتوسط", "class": 1, "phone": "966554949948"},
-            {"id": "1162168627", "name": "مبارك صالح مبارك هليل", "grade": "الثاني المتوسط", "class": 1, "phone": "966553663819"},
-            {"id": "1163212978", "name": "محمد بن عبدالله بن حمد بن ناصر بن عمران", "grade": "الثاني المتوسط", "class": 1, "phone": "966544779170"},
-            {"id": "1161858301", "name": "محمد عبدالمحسن ناصر الحزام", "grade": "الثاني المتوسط", "class": 1, "phone": "966505264075"},
-            {"id": "1175902442", "name": "محمد فايز عبدالرحمن بن يوسف", "grade": "الثاني المتوسط", "class": 1, "phone": "966505482728"},
-            {"id": "1165686179", "name": "مشاري سلطان سالم الشمراني", "grade": "الثاني المتوسط", "class": 1, "phone": "966553908888"},
-            {"id": "1166040053", "name": "معاذ عبدالله سعود العريفي", "grade": "الثاني المتوسط", "class": 1, "phone": "966505473192"},
-            {"id": "1167081981", "name": "ناصر حسين محمد ال جبران", "grade": "الثاني المتوسط", "class": 1, "phone": "966550004952"},
-            {"id": "1171868639", "name": "وائل بن عبدالله بن عامر علي ال عبيد الغامدي", "grade": "الثاني المتوسط", "class": 1, "phone": "966548888663"},
-            {"id": "1163191222", "name": "يزيد بن طارق بن علي الحديثي", "grade": "الثاني المتوسط", "class": 1, "phone": "966554084040"}
-        ],
-        2: [
-            {"id": "1166753291", "name": "ابراهيم بن مبارك بن راشد بن عبدالرحمن السبعان آل موينع", "grade": "الثاني المتوسط", "class": 2, "phone": "966555212896"},
-            {"id": "1163613795", "name": "ابراهيم ياسر ابراهيم الحلوي", "grade": "الثاني المتوسط", "class": 2, "phone": "966502220990"},
-            {"id": "1167148251", "name": "حامد بن محمد بن حامد شباط", "grade": "الثاني المتوسط", "class": 2, "phone": "966595001616"},
-            {"id": "1164599977", "name": "حسام حسن محمد الشهري", "grade": "الثاني المتوسط", "class": 2, "phone": "966557775278"},
-            {"id": "1169057351", "name": "خالد تركي عايض القحطاني", "grade": "الثاني المتوسط", "class": 2, "phone": "966536201378"},
-            {"id": "1164120600", "name": "خالد داود بن عابد الحارثي", "grade": "الثاني المتوسط", "class": 2, "phone": "966501076244"},
-            {"id": "1165839455", "name": "سطام عبدالعزيز عبدالله العريفي", "grade": "الثاني المتوسط", "class": 2, "phone": "966599791658"},
-            {"id": "1163778960", "name": "سعود سلطان بن هليل العتيبي", "grade": "الثاني المتوسط", "class": 2, "phone": "966554820082"},
-            {"id": "1166582989", "name": "طلال محمد منير المهدرس", "grade": "الثاني المتوسط", "class": 2, "phone": "966531167666"},
-            {"id": "1165143783", "name": "عبدالكريم مساعد عبدالعزيز الهزاع", "grade": "الثاني المتوسط", "class": 2, "phone": "966503210252"},
-            {"id": "1164277830", "name": "عبداللطيف ابراهيم محمد الطمرة", "grade": "الثاني المتوسط", "class": 2, "phone": "966505404365"}
-        ],
-        3: [
-            {"id": "1167515020", "name": "عزام خالد شلهوب بن شلهوب", "grade": "الثاني المتوسط", "class": 3, "phone": "966506404016"},
-            {"id": "1164747014", "name": "عزام فهد احمد صلوي", "grade": "الثاني المتوسط", "class": 3, "phone": "966555796951"},
-            {"id": "4533080448", "name": "عمر وليد ياسين درويش علي", "grade": "الثاني المتوسط", "class": 3, "phone": "966557790508"},
-            {"id": "1163397811", "name": "فارس ابن محمد بن سالم بن نويشي الوهبي الحربي", "grade": "الثاني المتوسط", "class": 3, "phone": "966583228278"},
-            {"id": "1166629798", "name": "يزيد بن حمد بن مترك بن محمد ال مسعود القحطاني", "grade": "الثاني المتوسط", "class": 3, "phone": "966505203795"},
-            {"id": "1167371093", "name": "يوسف عايد عواد البلوي", "grade": "الثاني المتوسط", "class": 3, "phone": "966531066289"}
-        ]
-    },
-    "الثالث المتوسط": {
-        1: [
-            {"id": "1158966166", "name": "أاصيل ناصر بن محمد مذكور", "grade": "الثالث المتوسط", "class": 1, "phone": "966552149044"},
-            {"id": "1162308223", "name": "خالد محمد مسدف معافا", "grade": "الثالث المتوسط", "class": 1, "phone": "966552680201"},
-            {"id": "1161109093", "name": "راكان بن عبدالله بن سالم اليافعي", "grade": "الثالث المتوسط", "class": 1, "phone": "966504234219"},
-            {"id": "1160805899", "name": "زياد احمد بن علي اللحيد", "grade": "الثالث المتوسط", "class": 1, "phone": "966504432362"},
-            {"id": "1160267124", "name": "سطام محمد سعود الدوسري", "grade": "الثالث المتوسط", "class": 1, "phone": "966555260669"},
-            {"id": "1163270869", "name": "سلطان احمد صالح الفنتوخ", "grade": "الثالث المتوسط", "class": 1, "phone": "966555242266"},
-            {"id": "1161085236", "name": "ضاري صالح مهنا العازمي", "grade": "الثالث المتوسط", "class": 1, "phone": "966531111140"},
-            {"id": "1160585624", "name": "عبدالعزيز عبدالله شراز المالكي", "grade": "الثالث المتوسط", "class": 1, "phone": "966556999627"},
-            {"id": "1160050678", "name": "عبدالعزيز عبدالله عايض الاسمري", "grade": "الثالث المتوسط", "class": 1, "phone": "966555992269"},
-            {"id": "1161021314", "name": "عبدالله عبيد عبدالله العتيبي", "grade": "الثالث المتوسط", "class": 1, "phone": "966597882020"},
-            {"id": "1160857700", "name": "عبدالله فهد جلوي سالم الشرمي", "grade": "الثالث المتوسط", "class": 1, "phone": "966555457732"},
-            {"id": "2502333723", "name": "عماد الدين اسلام محمد دراز", "grade": "الثالث المتوسط", "class": 1, "phone": "966556124553"},
-            {"id": "1161418593", "name": "فهد عبدالرحمن فهد العتيبي", "grade": "الثالث المتوسط", "class": 1, "phone": "966552270402"},
-            {"id": "1163074592", "name": "فيصل بن عبدالمحسن بن عايض العصيمي العتيبي", "grade": "الثالث المتوسط", "class": 1, "phone": "966505552320"},
-            {"id": "1171918236", "name": "مازن خالد عبدربه الزهراني", "grade": "الثالث المتوسط", "class": 1, "phone": "966540707365"},
-            {"id": "1158815876", "name": "محمد سلطان عبدالعزيز العيد", "grade": "الثالث المتوسط", "class": 1, "phone": "966503167770"},
-            {"id": "1166075653", "name": "محمد مقعد ساير العتيبي", "grade": "الثالث المتوسط", "class": 1, "phone": "966536655992"},
-            {"id": "1160693949", "name": "مشاري ابراهيم عبداللطيف المغري", "grade": "الثالث المتوسط", "class": 1, "phone": "966542744245"},
-            {"id": "1160803878", "name": "مشاري علي موسى عقيلي", "grade": "الثالث المتوسط", "class": 1, "phone": "966502259722"},
-            {"id": "1161661846", "name": "مهند عبدالله فهد الزكري", "grade": "الثالث المتوسط", "class": 1, "phone": "966558794720"},
-            {"id": "1159404795", "name": "نواف وليد حمد الشعلان", "grade": "الثالث المتوسط", "class": 1, "phone": "966555798074"},
-            {"id": "1168385894", "name": "يوسف نايف مقعد العتيبي", "grade": "الثالث المتوسط", "class": 1, "phone": "966505290037"}
-        ],
-        2: [
-            {"id": "1156933093", "name": "تركي عبدالعزيز عبدالله المرزوق", "grade": "الثالث المتوسط", "class": 2, "phone": "966501100076"},
-            {"id": "1160223317", "name": "تركي عثمان عبدالعزيز العثمان", "grade": "الثالث المتوسط", "class": 2, "phone": "966505226153"},
-            {"id": "1159683497", "name": "راشد احمد فهد ال سعيد", "grade": "الثالث المتوسط", "class": 2, "phone": "966555992829"},
-            {"id": "2310646332", "name": "راكان ابراهيم محمد ديوان", "grade": "الثالث المتوسط", "class": 2, "phone": "966500030732"},
-            {"id": "1161397599", "name": "ريان ناصر عبدالرحمن المرشود", "grade": "الثالث المتوسط", "class": 2, "phone": "966550666662"},
-            {"id": "1163112129", "name": "صالح بن ممدوح بن صالح بن خالد الجويعي", "grade": "الثالث المتوسط", "class": 2, "phone": "966549887719"},
-            {"id": "2508581135", "name": "عبد الرحمن محمد صلاح السيد بدر الدين", "grade": "الثالث المتوسط", "class": 2, "phone": "966507652707"},
-            {"id": "1162188872", "name": "عبدالعزيز تركي عبدالعزيز اللهيم", "grade": "الثالث المتوسط", "class": 2, "phone": "966505256806"},
-            {"id": "1161340763", "name": "عبدالعزيز عبدالمحسن فهد بن بديع", "grade": "الثالث المتوسط", "class": 2, "phone": "966554457163"},
-            {"id": "1171845140", "name": "عبدالله متعب بن عبدالرحمن الجبرين", "grade": "الثالث المتوسط", "class": 2, "phone": "966559898559"},
-            {"id": "1159200318", "name": "عبدالمحسن طارق بن عبدالرحمن العروان", "grade": "الثالث المتوسط", "class": 2, "phone": "966506291294"},
-            {"id": "1162454266", "name": "عمر فهد محمد السقامي", "grade": "الثالث المتوسط", "class": 2, "phone": "966564234552"},
-            {"id": "1165152107", "name": "فيصل محمد صالح الفنتوخ", "grade": "الثالث المتوسط", "class": 2, "phone": "966556488802"},
-            {"id": "1162325722", "name": "ماجد فهد عبدالعزيز الكثيري", "grade": "الثالث المتوسط", "class": 2, "phone": "966557609015"},
-            {"id": "1162461857", "name": "محمد خالد محمد بن مشرف", "grade": "الثالث المتوسط", "class": 2, "phone": "966551777559"},
-            {"id": "1161288897", "name": "محمد سعد بن محمد العيشان", "grade": "الثالث المتوسط", "class": 2, "phone": "966504217660"},
-            {"id": "1156334813", "name": "محمد عبدالعزيز محمد الخالدي", "grade": "الثالث المتوسط", "class": 2, "phone": "966500091387"},
-            {"id": "1162044851", "name": "مهند ماجد علي كعبي", "grade": "الثالث المتوسط", "class": 2, "phone": "966533313738"},
-            {"id": "1158021137", "name": "ناصر محمد عبدالله الزريعي", "grade": "الثالث المتوسط", "class": 2, "phone": "966505231121"},
-            {"id": "1161363443", "name": "نواف سعد بن علي القاسم", "grade": "الثالث المتوسط", "class": 2, "phone": "966504200199"},
-            {"id": "1162274086", "name": "ياسر تركي اسماعيل مسملي", "grade": "الثالث المتوسط", "class": 2, "phone": "966504261855"}
+            {"id": "1164769430", "name": "عبدالرحمن حمد بن محمد العريفي", "grade": "الثاني المتوسط", "class": 1, "phone": "966555556856"}
         ]
     }
 }
 
 ### =========================================================
-### 4. إعداد واجهة التطبيق والتنسيق العربي + CSS الطباعة
+### 4. إعدادات الصفحة والتنسيقات المخصصة (Custom CSS & Print Setup)
 ### =========================================================
 st.set_page_config(
-    page_title="برنامج رصد الدرجات - متوسطة الثغر النموذجية الأهلية",
+    page_title="منصة مدرسة الثغر النموذجية - تقارير الإتقان والرسائل",
     page_icon="🏫",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
-# إضافة CSS للواجهة ولخاصية الطباعة (@media print)
+# حل مشكلة تداخل النصوص (Text Overlap Fix) وتصميم التقارير للطباعة (Print CSS)
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap');
 
-html, body, [class*="css"], div, span, button, input, select {
-    font-family: 'Cairo', sans-serif !important;
-    direction: rtl;
-    text-align: right;
+/* تطبيق الخط والاتجاه الصحيح على التطبيق ككل بدون تدمير الهياكل الداخلية */
+html, body, .stApp {
+    font-family: 'Cairo', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif !important;
+    direction: rtl !important;
+    text-align: right !important;
+    background-color: #f8f9fa;
 }
 
+/* ضبط ارتفاع الأسطر لمنع تداخل النصوص في كافة العناصر */
+h1, h2, h3, h4, h5, h6, p, div, span, label, input, button, select, textarea {
+    font-family: 'Cairo', sans-serif !important;
+    line-height: 1.6 !important;
+}
+
+/* تصحيح محاذاة العناوين والأزرار */
+.stButton > button {
+    font-family: 'Cairo', sans-serif !important;
+    font-weight: 700 !important;
+    border-radius: 8px !important;
+}
+
+/* تصحيح تداخل نصوص بطاقات الإحصائيات Metrics */
+[data-testid="stMetricValue"] {
+    font-size: 1.6rem !important;
+    font-weight: 700 !important;
+    line-height: 1.3 !important;
+    margin-top: 4px !important;
+}
+[data-testid="stMetricLabel"] {
+    font-size: 0.95rem !important;
+    font-weight: 600 !important;
+    line-height: 1.4 !important;
+    color: #495057 !important;
+}
+
+/* شارات حالة الاتصال */
 .status-badge-ok {
     background-color: #d4edda;
     color: #155724;
-    padding: 6px 12px;
-    border-radius: 6px;
+    padding: 8px 12px;
+    border-radius: 8px;
     font-size: 13px;
     font-weight: bold;
     text-align: center;
+    border: 1px solid #c3e6cb;
 }
 .status-badge-off {
     background-color: #f8d7da;
     color: #721c24;
-    padding: 6px 12px;
-    border-radius: 6px;
+    padding: 8px 12px;
+    border-radius: 8px;
     font-size: 13px;
     font-weight: bold;
     text-align: center;
+    border: 1px solid #f5c6cb;
 }
 
-/* تنسيق للطباعة فقط */
+/* حاوية التقرير القابل للطباعة على الشاشة وفي أوراق A4 */
+.report-paper {
+    background-color: #ffffff;
+    border: 1px solid #e0e0e0;
+    border-radius: 10px;
+    padding: 25px;
+    margin-top: 15px;
+    margin-bottom: 25px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+}
+
+.report-header-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 15px;
+    border-bottom: 2px solid #1f4e78;
+    padding-bottom: 10px;
+}
+.report-header-table td {
+    border: none !important;
+    padding: 4px 8px !important;
+    vertical-align: middle;
+}
+
+.report-title-box {
+    text-align: center;
+    background-color: #f1f5f9;
+    padding: 10px;
+    border-radius: 8px;
+    margin-bottom: 15px;
+    border: 1px solid #cbd5e1;
+}
+
+/* جداول التقارير المطبوعة - تمنع الجداول الفارغة والتداخل وتدعم A4 */
+table.printable-table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+    margin-top: 10px !important;
+    font-size: 13px !important;
+    direction: rtl !important;
+}
+table.printable-table th {
+    background-color: #1f4e78 !important;
+    color: #ffffff !important;
+    padding: 10px 8px !important;
+    text-align: center !important;
+    font-weight: bold !important;
+    border: 1px solid #1f4e78 !important;
+}
+table.printable-table td {
+    border: 1px solid #d1d5db !important;
+    padding: 8px 6px !important;
+    text-align: center !important;
+    color: #1f2937 !important;
+}
+table.printable-table tr:nth-child(even) {
+    background-color: #f8fafc !important;
+}
+
+/* تنسيقات الطباعة الخاصة بـ @media print */
 @media print {
+    /* إخفاء القائمة الجانبية والأزرار وعناصر التحكم عند الطباعة */
     section[data-testid="stSidebar"], 
     header, 
     footer, 
     .stButton, 
+    .no-print,
     iframe {
         display: none !important;
     }
-    .main .block-container {
+    
+    @page {
+        size: A4 portrait;
+        margin: 10mm 12mm 10mm 12mm;
+    }
+    
+    body, .stApp, .main .block-container {
+        background-color: white !important;
+        color: black !important;
         padding: 0 !important;
         margin: 0 !important;
         width: 100% !important;
     }
-    table {
-        width: 100% !important;
-        border-collapse: collapse !important;
+    
+    .report-paper {
+        border: none !important;
+        box-shadow: none !important;
+        padding: 0 !important;
+        margin: 0 !important;
     }
-    th, td {
-        border: 1px solid #ddd !important;
-        padding: 8px !important;
-        text-align: right !important;
+    
+    table.printable-table th {
+        background-color: #1f4e78 !important;
+        color: white !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+    table.printable-table tr:nth-child(even) {
+        background-color: #f1f5f9 !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
     }
 }
 </style>
@@ -463,10 +494,10 @@ else:
 st.sidebar.markdown("---")
 st.sidebar.subheader("📱 إعدادات البوابات والرسائل")
 
-with st.sidebar.expander("💬 إعدادات WhatsApp Direct API (إرسال تلقائي دون فتح التطبيق)"):
+with st.sidebar.expander("💬 إعدادات WhatsApp Direct API"):
     wa_instance = st.text_input("Instance ID:", value="", key="wa_inst_inp")
     wa_token = st.text_input("API Token:", value="", type="password", key="wa_tok_inp")
-    st.caption("💡 باستخدام هذه الإعدادات، يتم إرسال رسائل الواتساب مباشرة للطلاب في الخلفية فور الضغط على زر الإرسال بنقرة واحدة.")
+    st.caption("💡 إرسال إشعارات الواتساب مباشرة لولي الأمر دون الحاجة لفتح تطبيق الواتساب.")
 
 with st.sidebar.expander("📱 إعدادات Mora SMS"):
     mora_user = st.text_input("اسم المستخدم / الرقم:", value="966508634881", key="mora_u")
@@ -498,7 +529,7 @@ if page == "📝 صفحة الرصد":
         weeks = [f"الأسبوع {i}" for i in range(1, 19)]
         selected_week = st.selectbox("اختر الأسبوع:", weeks)
     with col_w2:
-        st.write("") # محاذاة مسافة
+        st.write("") 
         st.info(f"📍 يتم الرصد لـ: **{selected_grade} (فصل {selected_class})** - **{selected_week}**")
 
     st.markdown("---")
@@ -517,14 +548,14 @@ if page == "📝 صفحة الرصد":
         default_score = float(saved_rec.get("score", 100.0))
         default_absent = bool(saved_rec.get("is_absent", 0))
 
-        c1, c2, c3, c4 = st.columns([1, 3, 2, 2])
+        c1, c2, c3, c4 = st.columns([1, 4, 2, 2])
         with c1:
             st.write(f"**#{idx+1}**")
         with c2:
-            st.write(f"**{student['name']}**\n*(هوية: {sid})*")
+            st.markdown(f"**{student['name']}**<br/><span style='color:#6c757d; font-size:12px;'>رقم الهوية: {sid}</span>", unsafe_allow_html=True)
         with c3:
             sc_val = st.number_input(
-                f"الدرجة ({student['name']})",
+                f"الدرجة",
                 min_value=0.0,
                 max_value=100.0,
                 value=default_score,
@@ -582,7 +613,10 @@ elif page == "🏫 إدارة المدرسة وتقارير أولياء الأ�
                 sc = rec.get("score", None)
                 is_abs = rec.get("is_absent", 0)
 
-                msg = generate_parent_message(s_item["name"], sc, is_abs == 1)
+                # إذا لم تكن هناك درجات محفوظة في الداتابيز، نضع الدرجة الافتراضية 100 لتفادي الحقول الفارغة
+                final_score = float(sc) if (sc is not None) else 100.0
+
+                msg = generate_parent_message(s_item["name"], final_score, is_abs == 1)
 
                 row_dict = {
                     "id": sid,
@@ -590,7 +624,7 @@ elif page == "🏫 إدارة المدرسة وتقارير أولياء الأ�
                     "grade": g_name,
                     "class": c_num,
                     "phone": p_num,
-                    "score": sc if (sc is not None and is_abs == 0) else 0.0,
+                    "score": final_score if is_abs == 0 else 0.0,
                     "is_absent": is_abs,
                     "message": msg
                 }
@@ -598,15 +632,15 @@ elif page == "🏫 إدارة المدرسة وتقارير أولياء الأ�
 
                 if is_abs == 1:
                     cat_gray.append(row_dict)
-                elif sc is None or sc < 50:
+                elif final_score < 50:
                     cat_red.append(row_dict)
-                elif sc <= 75:
+                elif final_score <= 75:
                     cat_blue.append(row_dict)
                 else:
                     cat_green.append(row_dict)
 
     # ---------------------------------------------------------
-    # قسم الطباعة الشاملة للأسبوع المختار
+    # 1. قسم التقرير الشامل للأسبوع المختار (معد ومصمم للطباعة)
     # ---------------------------------------------------------
     st.markdown("### 📊 التقرير الشامل للأسبوع المختار")
     col_rep1, col_rep2 = st.columns([3, 1])
@@ -615,21 +649,91 @@ elif page == "🏫 إدارة المدرسة وتقارير أولياء الأ�
         st.info(f"**تقرير شامل:** {selected_term} - {selected_week} | إجمالي طلاب المدرسة: {len(all_students_flat)} طالب")
 
     with col_rep2:
-        # أيقونة/زر طباعة التقرير الشامل للأسبوع
         print_button(label="🖨️ طباعة تقرير الأسبوع الشامل", button_id="print_full_week")
 
     m1, m2, m3, m4 = st.columns(4)
-    m1.metric("🔴 فئة أقل من 50%", f"{len(cat_red)} طالب")
-    m2.metric("🔵 فئة 50% - 75%", f"{len(cat_blue)} طالب")
-    m3.metric("🟢 فئة 76% - 100%", f"{len(cat_green)} طالب")
-    m4.metric("⚪ فئة الغياب", f"{len(cat_gray)} طالب")
+    m1.metric("🔴 أقل من 50%", f"{len(cat_red)} طالب")
+    m2.metric("🔵 50% - 75%", f"{len(cat_blue)} طالب")
+    m3.metric("🟢 76% - 100%", f"{len(cat_green)} طالب")
+    m4.metric("⚪ الغياب", f"{len(cat_gray)} طالب")
+
+    # توليد التقرير الشامل بصيغة HTML جاهزة وموثقة للطباعة والعرض (بدون Canvas)
+    today_str = datetime.now().strftime("%Y/%m/%d")
+    
+    rows_html = ""
+    for idx, s in enumerate(all_students_flat):
+        status_txt = "غائب ⚪" if s['is_absent'] == 1 else ("متفوق 🟢" if s['score'] >= 76 else ("جيد 🔵" if s['score'] >= 50 else "يحتاج متابعة 🔴"))
+        score_txt = f"{s['score']}%" if s['is_absent'] == 0 else "-"
+        rows_html += f"""
+        <tr>
+            <td>{idx+1}</td>
+            <td>{s['id']}</td>
+            <td style="text-align: right; padding-right: 12px; font-weight: 600;">{s['name']}</td>
+            <td>{s['grade']}</td>
+            <td>فصل {s['class']}</td>
+            <td style="font-weight: bold;">{score_txt}</td>
+            <td>{status_txt}</td>
+        </tr>
+        """
+
+    full_report_html = f"""
+    <div class="report-paper">
+        <table class="report-header-table">
+            <tr>
+                <td style="width: 30%; text-align: right; font-size: 12px; line-height: 1.4;">
+                    <strong>المملكة العربية السعودية</strong><br/>
+                    وزارة التعليم<br/>
+                    إدارة التعليم بمحافظة جدة<br/>
+                    <strong>مدرسة الثغر النموذجية الأهلية المتوسطة</strong>
+                </td>
+                <td style="width: 40%; text-align: center;">
+                    <h3 style="margin:0; color:#1f4e78; font-family:'Cairo'; font-weight:bold;">📋 التقرير الشامل لدرجات الإتقان</h3>
+                    <div style="font-size: 13px; color:#475569; margin-top:4px;">{selected_term} - {selected_week}</div>
+                </td>
+                <td style="width: 30%; text-align: left; font-size: 12px; line-height: 1.4;">
+                    <strong>تاريخ التقرير:</strong> {today_str}<br/>
+                    <strong>إجمالي الطلاب:</strong> {len(all_students_flat)} طالب<br/>
+                    <strong>عدد الغياب:</strong> {len(cat_gray)} طالب
+                </td>
+            </tr>
+        </table>
+
+        <table class="printable-table">
+            <thead>
+                <tr>
+                    <th style="width: 5%;">#</th>
+                    <th style="width: 15%;">رقم الهوية</th>
+                    <th style="width: 30%;">اسم الطالب</th>
+                    <th style="width: 18%;">المرحلة الدراسية</th>
+                    <th style="width: 10%;">الفصل</th>
+                    <th style="width: 11%;">النسبة %</th>
+                    <th style="width: 11%;">الحالة</th>
+                </tr>
+            </thead>
+            <tbody>
+                {rows_html}
+            </tbody>
+        </table>
+
+        <br/>
+        <table style="width: 100%; margin-top: 25px; border: none; text-align: center; font-size: 13px; font-weight: bold;">
+            <tr>
+                <td style="width: 33%; border: none;">معلم المادة:<br/><br/>...........................</td>
+                <td style="width: 33%; border: none;">وكيل الشؤون التعليمية:<br/><br/>...........................</td>
+                <td style="width: 34%; border: none;">مدير المدرسة:<br/><br/>...........................</td>
+            </tr>
+        </table>
+    </div>
+    """
+
+    st.markdown(full_report_html, unsafe_allow_html=True)
 
     st.markdown("---")
 
     # ---------------------------------------------------------
-    # قسم الطباعة حسب الصف
+    # 2. قسم طباعة تقرير الصف الدراسي المحدد
     # ---------------------------------------------------------
-    st.markdown("### 🏫 تقرير الصف وإتقان الدرجات (طباعة حسب الصف)")
+    st.markdown("### 🏫 تقرير الصف المالي والدرجات (طباعة حسب الصف)")
     
     col_g1, col_g2, col_g3 = st.columns([2, 2, 2])
 
@@ -646,21 +750,79 @@ elif page == "🏫 إدارة المدرسة وتقارير أولياء الأ�
     ]
 
     with col_g3:
-        st.write("") # محاذاة مسافة
+        st.write("")
         print_button(label=f"🖨️ طباعة تقرير {selected_rep_grade} ({selected_rep_class})", button_id="print_class_rep")
 
     if class_students:
-        df_class = pd.DataFrame(class_students)[["id", "name", "score", "is_absent"]]
-        df_class.columns = ["رقم الهوية", "اسم الطالب", "الدرجة / النسبة المئوية", "حالة الغياب"]
-        df_class["حالة الغياب"] = df_class["حالة الغياب"].map({0: "حاضر 🟢", 1: "غائب ⚪"})
-        st.dataframe(df_class, use_container_width=True)
+        class_rows_html = ""
+        for idx, s in enumerate(class_students):
+            status_txt = "غائب ⚪" if s['is_absent'] == 1 else ("متفوق 🟢" if s['score'] >= 76 else ("جيد 🔵" if s['score'] >= 50 else "يحتاج متابعة 🔴"))
+            score_txt = f"{s['score']}%" if s['is_absent'] == 0 else "-"
+            class_rows_html += f"""
+            <tr>
+                <td>{idx+1}</td>
+                <td>{s['id']}</td>
+                <td style="text-align: right; padding-right: 12px; font-weight: 600;">{s['name']}</td>
+                <td style="font-weight: bold;">{score_txt}</td>
+                <td>{status_txt}</td>
+            </tr>
+            """
+
+        class_report_html = f"""
+        <div class="report-paper">
+            <table class="report-header-table">
+                <tr>
+                    <td style="width: 30%; text-align: right; font-size: 12px; line-height: 1.4;">
+                        <strong>المملكة العربية السعودية</strong><br/>
+                        وزارة التعليم<br/>
+                        إدارة التعليم بمحافظة جدة<br/>
+                        <strong>مدرسة الثغر النموذجية الأهلية المتوسطة</strong>
+                    </td>
+                    <td style="width: 40%; text-align: center;">
+                        <h3 style="margin:0; color:#1f4e78; font-family:'Cairo'; font-weight:bold;">🏫 تقرير تقييم الصف الدراسي</h3>
+                        <div style="font-size: 14px; color:#1e293b; font-weight:bold; margin-top:4px;">{selected_rep_grade} - فصل ({selected_rep_class})</div>
+                        <div style="font-size: 12px; color:#64748b;">{selected_term} - {selected_week}</div>
+                    </td>
+                    <td style="width: 30%; text-align: left; font-size: 12px; line-height: 1.4;">
+                        <strong>تاريخ التقرير:</strong> {today_str}<br/>
+                        <strong>عدد طلاب الفصل:</strong> {len(class_students)} طالب
+                    </td>
+                </tr>
+            </table>
+
+            <table class="printable-table">
+                <thead>
+                    <tr>
+                        <th style="width: 8%;">#</th>
+                        <th style="width: 22%;">رقم الهوية</th>
+                        <th style="width: 45%;">اسم الطالب</th>
+                        <th style="width: 12%;">النسبة %</th>
+                        <th style="width: 13%;">الحالة</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {class_rows_html}
+                </tbody>
+            </table>
+
+            <br/>
+            <table style="width: 100%; margin-top: 25px; border: none; text-align: center; font-size: 13px; font-weight: bold;">
+                <tr>
+                    <td style="width: 50%; border: none;">معلم الفصل / المادة:<br/><br/>...........................</td>
+                    <td style="width: 50%; border: none;">مدير المدرسة:<br/><br/>...........................</td>
+                </tr>
+            </table>
+        </div>
+        """
+
+        st.markdown(class_report_html, unsafe_allow_html=True)
     else:
         st.warning("لا توجد بيانات متاحة لهذا الصف في الأسبوع المختار.")
 
     st.markdown("---")
 
     # ---------------------------------------------------------
-    # تبويبات إرسال الرسائل حسب الفئات
+    # تبويبات إرسال الرسائل حسب الفئات (WhatsApp API + Mora SMS)
     # ---------------------------------------------------------
     st.markdown("##### 📱 قناتا الإرسال المتاحتان لولي الأمر (WhatsApp API + Mora SMS):")
     col_info1, col_info2 = st.columns(2)
