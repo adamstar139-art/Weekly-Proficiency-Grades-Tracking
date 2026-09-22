@@ -31,7 +31,7 @@ def get_supabase():
     if not url and hasattr(st.secrets, "get"):
         url = st.secrets.get("url") or st.secrets.get("SUPABASE_URL")
     if not key and hasattr(st.secrets, "get"):
-        key = st.secrets.get("key") or st.secrets.get("SUPABASE_KEY") or st.secrets.get("anon_key")
+        key = st.secrets.get("key") or st.secrets.get("SUPABASE_KEY") or sec.get("anon_key") if 'sec' in locals() else None
 
     if not url or not key:
         return None
@@ -544,7 +544,7 @@ if page == "📝 صفحة الرصد":
     with col2:
         grade = st.selectbox("الصف الدراسي:", ["الأول المتوسط", "الثاني المتوسط", "الثالث المتوسط"])
     with col3:
-        available_classes = list(STUDENTS_DB_GRADES.get(grade, {}).keys()) or [1, 3, 4]
+        available_classes = list(STUDENTS_DB_GRADES.get(grade, {}).keys()) or [1]
         class_num = st.selectbox("الفصل / الشعبة:", available_classes)
     with col4:
         weeks = [f"الأسبوع {i}" for i in range(1, 19)]
@@ -571,7 +571,7 @@ if page == "📝 صفحة الرصد":
                 default_sc = float(saved_rec.get("score", 0.0))
                 default_abs = bool(saved_rec.get("is_absent", 0))
 
-                col_name, col_score, col_absent = st.columns([1, 3, 4])
+                col_name, col_score, col_absent = st.columns([3, 1, 1])
                 with col_name:
                     st.markdown(f'<div class="student-card">📌 <b>{idx}. {st_item["name"]}</b> <small style="color:#64748B;">({sid})</small></div>', unsafe_allow_html=True)
                 with col_score:
@@ -781,7 +781,7 @@ elif page == "🏫 إدارة المدرسة وتقارير أولياء الأ�
         with col_p1:
             st_select = st.selectbox("اختر الطالب لتحديث رقم جوال ولي أمره:", df_reports_all["name"].tolist())
 
-        selected_st_row = df_reports_all[df_reports_all["name"] == st_select].iloc
+        selected_st_row = df_reports_all[df_reports_all["name"] == st_select].iloc[0]
 
         with col_p2:
             new_phone = st.text_input("رقم الجوال الجديد:", value=selected_st_row["phone"])
@@ -1024,7 +1024,7 @@ elif page == "🁻 طباعة التقارير والتحليلات":
     # 2. تقرير الصفوف
     elif rep_type == "🏫 تقرير الصفوف":
         st.markdown("<div class='report-card'>", unsafe_allow_html=True)
-        col_hdr, col_drop = st.columns([3])
+        col_hdr, col_drop = st.columns([2, 2])
         with col_hdr:
             st.markdown("<div class='report-title'>🏫 تقرير الصفوف الدراسية</div>", unsafe_allow_html=True)
         with col_drop:
@@ -1081,7 +1081,7 @@ elif page == "🁻 طباعة التقارير والتحليلات":
         with col_d1:
             cls_grade = st.selectbox("اختر الصف:", ["الأول المتوسط", "الثاني المتوسط", "الثالث المتوسط"], key="cls_g_select")
         with col_d2:
-            available_classes_rep = list(STUDENTS_DB_GRADES.get(cls_grade, {}).keys()) or [1, 3, 4]
+            available_classes_rep = list(STUDENTS_DB_GRADES.get(cls_grade, {}).keys()) or [1]
             cls_num = st.selectbox("اختر الفصل/الشعبة:", available_classes_rep, key="cls_n_select")
 
         df_class = df_master[(df_master["الصف الدراسي"] == cls_grade) & (df_master["الفصل / الشعبة"] == f"فصل {cls_num}")]
@@ -1222,7 +1222,7 @@ elif page == "👥 إدارة الطلاب (إضافة / حذف / نقل)":
                 new_name = st.text_input("اسم الطالب الرباعي:", placeholder="مثال: أحمد محمد علي الغامدي")
             with col_a2:
                 new_grade = st.selectbox("الصف الدراسي:", ["الأول المتوسط", "الثاني المتوسط", "الثالث المتوسط"], key="add_g_select")
-                new_class = st.selectbox("الفصل / الشعبة:", [1, 3, 4], key="add_c_select")
+                new_class = st.selectbox("الفصل / الشعبة:", [1, 2, 3], key="add_c_select")
                 new_phone = st.text_input("رقم جوال ولي الأمر:", placeholder="مثال: 966501234567")
             
             btn_add = st.form_submit_button("💾 حفظ وإضافة الطالب إلى القائمة")
@@ -1263,7 +1263,7 @@ elif page == "👥 إدارة الطلاب (إضافة / حذف / نقل)":
         with col_d1:
             del_grade = st.selectbox("اختر الصف الدراسي للطالب:", ["الأول المتوسط", "الثاني المتوسط", "الثالث المتوسط"], key="del_g_select")
         with col_d2:
-            avail_classes_del = list(st.session_state["students_db"].get(del_grade, {}).keys()) or [1, 3, 4]
+            avail_classes_del = list(st.session_state["students_db"].get(del_grade, {}).keys()) or [1]
             del_class = st.selectbox("اختر الفصل / الشعبة:", avail_classes_del, key="del_c_select")
             
         current_class_students = st.session_state["students_db"].get(del_grade, {}).get(del_class, [])
@@ -1292,7 +1292,7 @@ elif page == "👥 إدارة الطلاب (إضافة / حذف / نقل)":
         col_t1, col_t2 = st.columns(2)
         with col_t1:
             src_grade = st.selectbox("من صف:", ["الأول المتوسط", "الثاني المتوسط", "الثالث المتوسط"], key="src_g_select")
-            avail_src_classes = list(st.session_state["students_db"].get(src_grade, {}).keys()) or [1, 3, 4]
+            avail_src_classes = list(st.session_state["students_db"].get(src_grade, {}).keys()) or [1]
             src_class = st.selectbox("من فصل:", avail_src_classes, key="src_c_select")
             
             src_students = st.session_state["students_db"].get(src_grade, {}).get(src_class, [])
@@ -1306,7 +1306,7 @@ elif page == "👥 إدارة الطلاب (إضافة / حذف / نقل)":
                 
         with col_t2:
             target_grade = st.selectbox("إلى صف:", ["الأول المتوسط", "الثاني المتوسط", "الثالث المتوسط"], key="tgt_g_select")
-            target_class = st.selectbox("إلى فصل:", [1, 3, 4], key="tgt_c_select")
+            target_class = st.selectbox("إلى فصل:", [1, 2, 3], key="tgt_c_select")
             
         if selected_tr_obj and st.button("🔄 تأكيد نقل الطالب الآن"):
             # 1. إزالة من المكان الحالي
