@@ -846,7 +846,7 @@ elif page == "🏫 إدارة المدرسة وتقارير أولياء الأ�
             <tr>
                 <td>{idx+1}</td>
                 <td>{s['id']}</td>
-                <td style="text-align: right; padding-right: 12px; font-weight: 600;">{s['name']}</td>
+                <td style="text-align: right; padding-right: 12px; font-weight: 500;">{s['name']}</td>
                 <td>{s['grade']}</td>
                 <td>فصل {s['class']}</td>
                 <td style="font-weight: bold;">{score_txt}</td>
