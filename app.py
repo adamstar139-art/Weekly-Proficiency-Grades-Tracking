@@ -812,7 +812,7 @@ elif page == "🏫 إدارة المدرسة وتقارير أولياء الأ�
             
             col_b1, col_b2 = st.columns(2)
             with col_b1:
-                with st.expander(f"💬 إرسال واتساب جماعي في الخلفية ({len(cat_list)} طالب)"):
+                with st.expander(f" إرسال واتساب جماعي في الخلفية ({len(cat_list)} طالب)"):
                     st.write("سيتم إرسال الرسائل تلقائياً عبر WhatsApp Direct API دون فتح أي تطبيق.")
                     if st.button(f"⚡ إرسال واتساب جماعي لـ {cat_name}", key=f"bulk_wa_{cat_name}"):
                         with st.spinner("جاري الإرسال الجماعي عبر WhatsApp API..."):
@@ -836,7 +836,7 @@ elif page == "🏫 إدارة المدرسة وتقارير أولياء الأ�
                 wa_manual_url = create_whatsapp_web_url(item['phone'], item['message'])
                 score_str = f"{item['score']}%" if item['is_absent'] == 0 else "غائب ⚪"
                 
-                expander_label = f"👤 {item['name']}  •  {item['grade']}  •  فصل: {item['class']}"
+                expander_label = f" 👤  {item['name']}  •  {item['grade']}  •  فصل: {item['class']}"
                 with st.expander(expander_label):
                     st.markdown(f'''
                     <div style="background-color: #ffffff; border-radius: 10px; padding: 16px; border: 1px solid #e2e8f0; margin-bottom: 14px;">
@@ -855,7 +855,7 @@ elif page == "🏫 إدارة المدرسة وتقارير أولياء الأ�
                     btn_col1, btn_col2, btn_col3 = st.columns([1, 1, 1])
                     
                     with btn_col1:
-                        if st.button("💬 إرسال واتساب تلقائي", key=f"wa_dir_{item['id']}_{idx_st}"):
+                        if st.button(" إرسال واتساب تلقائي", key=f"wa_dir_{item['id']}_{idx_st}"):
                             with st.spinner("جاري الإرسال المباشر..."):
                                 ok, resp = send_whatsapp_direct_api(item['phone'], item['message'], wa_instance, wa_token)
                                 if ok:
