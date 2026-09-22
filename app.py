@@ -203,9 +203,9 @@ def render_clean_html(html_str):
     cleaned_html = "".join(lines)
     st.markdown(cleaned_html, unsafe_allow_html=True)
 
-# =========================================================
-# 2. دوال إرسال الرسائل (Mora SMS + WhatsApp Gateway API)
-# =========================================================
+### =========================================================
+### 3. خدمات WhatsApp Direct API و Mora SMS
+### =========================================================
 def send_whatsapp_direct_api(phone, message, instance_id="", api_token=""):
     if not api_token or not instance_id:
         return False, "يرجى إدخال Instance ID و API Token الخاص بخدمة WhatsApp Gateway في القائمة الجانبية."
@@ -232,30 +232,44 @@ def send_whatsapp_direct_api(phone, message, instance_id="", api_token=""):
     except Exception as e:
         return False, f"فشل الاتصال بـ API: {e}"
 
-def send_mora_sms(phone, message, username, password, sender_name, otp_code=""):
+def create_whatsapp_web_url(phone, message):
     phone_clean = str(phone).strip().replace("+", "").replace(" ", "").replace("-", "")
     if phone_clean.startswith("05"):
         phone_clean = "966" + phone_clean[1:]
     elif phone_clean.startswith("5"):
         phone_clean = "966" + phone_clean
+    msg_encoded = urllib.parse.quote(message)
+    return f"https://api.whatsapp.com/send?phone={phone_clean}&text={msg_encoded}"
 
-    url = "https://mora-sa.com/api/v1/sendsms"
-    payload = {
+def send_mora_sms(phone, message, username="966508634881", password="", sender="THAGHR-S", otp=""):
+    if not username or not password:
+        return False, "يرجى التأكد من إعدادات حساب Mora SMS."
+    phone_clean = str(phone).strip().replace("+", "").replace(" ", "").replace("-", "")
+    if phone_clean.startswith("05"):
+        phone_clean = "966" + phone_clean[1:]
+    elif phone_clean.startswith("5"):
+        phone_clean = "966" + phone_clean
+        
+    url = "https://www.mora-sms.com/api/sendsms.php"
+    params = {
         "username": username,
         "password": password,
-        "sender": sender_name,
+        "sender": sender,
         "numbers": phone_clean,
         "message": message,
-        "otp": otp_code
+        "unicode": "E",
+        "return": "json"
     }
+    if otp:
+        params["otp"] = otp
     try:
-        res = requests.post(url, data=payload, timeout=10)
-        if res.status_code == 200:
-            return True, "تم إرسال SMS بنجاح عبر Mora!"
+        resp = requests.get(url, params=params, timeout=10)
+        if resp.status_code == 200:
+            return True, "تم إرسال الرسالة النصية بنجاح عبر Mora SMS."
         else:
-            return False, f"خطأ Mora: {res.text}"
-    except Exception as ex:
-        return False, f"تعذر الإرسال: {ex}"
+            return False, f"خطأ في الإرسال: {resp.text}"
+    except Exception as e:
+        return False, f"فشل الاتصال بـ Mora SMS: {e}"
 
 def send_bulk_messages(students_list, channel="sms", mora_creds={}, wa_creds={}):
     succ, fail = 0, 0
@@ -267,52 +281,50 @@ def send_bulk_messages(students_list, channel="sms", mora_creds={}, wa_creds={})
             status, resp = send_whatsapp_direct_api(phone, msg, wa_creds.get("instance_id", ""), wa_creds.get("api_token", ""))
         else:
             status, resp = send_mora_sms(phone, msg, mora_creds.get("username", ""), mora_creds.get("password", ""), mora_creds.get("sender", ""), mora_creds.get("otp", ""))
-        
         if status:
             succ += 1
         else:
             fail += 1
-        details.append((st_item['name'], phone, status, resp))
+        details.append({"name": st_item['name'], "status": status, "response": resp})
     return succ, fail, details
 
-def create_whatsapp_web_url(phone, text):
-    phone_clean = str(phone).strip().replace("+", "").replace(" ", "").replace("-", "")
-    if phone_clean.startswith("05"):
-        phone_clean = "966" + phone_clean[1:]
-    elif phone_clean.startswith("5"):
-        phone_clean = "966" + phone_clean
-    encoded_text = urllib.parse.quote(text)
-    return f"https://api.whatsapp.com/send?phone={phone_clean}&text={encoded_text}"
-
-def generate_parent_message(student_name, score, is_absent):
+def generate_parent_message(student_name, score, is_absent=False):
     if is_absent:
         return (
-            f"المكرم ولي أمر الطالب/ {student_name}، نود التنبيه على غياب الطالب هذا اليوم، "
-            f"ونحثكم على متابعة الانتظام وحضور الاختبارات لتجنب حسم الدرجات والتأثير على مستواه التحصيلي: متوسطة الثغر النموذجية الأهلية."
+            f"المحترم ولي أمر الطالب/ {student_name}\n"
+            f"السلام عليكم ورحمة الله وبركاته،،\n"
+            f"نحيطكم علماً بأن ابنكم كان غائباً عن اختبار التقييم الأسبوعي لهذا الأسبوع في مدرسة الثغر النموذجية الأهلية.\n"
+            f"نرجو التواصل مع إدارة المدرسة لمتابعة حالة الطالب.\n"
+            f"شاكرين حسن تعاونكم."
         )
-    sc_str = f"{score}%" if score is not None else "أقل من 50%"
-    if score is None or score < 50:
+    elif score is None or score < 50:
         return (
-            f"المكرم ولي أمر الطالب/ {student_name}، نفيدكم بأن نسبة إتقان الطالب هذا الأسبوع هي ({sc_str}). "
-            f"حرصاً منا على مصلحة ابنكم ومستقبله الدراسي، نود إشعاركم بوجود تراجع ملحوظ في مستواه التحصيلي مؤخراً، "
-            f"ونرجو منكم تكثيف المتابعة المنزلية والتواصل معنا للوقوف على أسباب هذا التراجع ووضع خطة لتحسين أدائه. مع تحياتنا متوسطة الثغر النموذجية الأهلية."
+            f"المحترم ولي أمر الطالب/ {student_name}\n"
+            f"السلام عليكم ورحمة الله وبركاته،،\n"
+            f"نود إشعاركم بأن مستوى الطالب في تقييم هذا الأسبوع بحاجة إلى متابعة واهتمام، حيث حصل على نسبة ({score}%).\n"
+            f"نأمل حث الطالب على الاستذكار والمراجعة لرفع مستواه.\n"
+            f"شاكرين اهتمامكم الدائم."
         )
     elif score <= 75:
         return (
-            f"المكرم ولي أمر الطالب/ {student_name}، نفيدكم بأن نسبة إتقان الطالب هذا الأسبوع هي ({sc_str}). "
-            f"نود إحاطتكم علماً بأن المستوى التحصيلي لابنكم جيد ومستقر بشكل عام، ولكنه يمتلك قدرات أعلى تؤهله لتحقيق درجات أفضل. "
-            f"نأمل منكم التركيز معه في الفترة القادمة لرفع كفاءته الدراسية. شاكرين لكم تعاونكم الدائم. مع تحياتنا متوسطة الثغر النموذجية الأهلية."
+            f"المحترم ولي أمر الطالب/ {student_name}\n"
+            f"السلام عليكم ورحمة الله وبركاته،،\n"
+            f"نحيطكم علماً بأن ابنكم حقق مستوى جيداً في التقييم الأسبوعي بنسبة ({score}%).\n"
+            f"نتطلع إلى مزيد من الجهد للوصول إلى مستوى الإتقان العالي.\n"
+            f"شاكرين لكم حسن المتابعة."
         )
     else:
         return (
-            f"المكرم ولي أمر الطالب/ {student_name}، نتقدم بخالص الشكر والتقدير لكم وللطالب على الاهتمام والتفوق بنسبة إتقان ممتازة ({sc_str})، "
-            f"يسعدنا إبلاغكم بأن ابنكم قدم أداءً تحصيلياً متميزاً وسلوكاً رائعاً داخل الفصل، وحصل على درجات ممتازة في التقييمات الأخيرة. "
-            f"نشكر لكم حسن المتابعة والاهتمام، ونرجو الاستمرار في هذا الدعم المتبادل للحفاظ على هذا المستوى المتفوق. مع تحياتنا متوسطة الثغر النموذجية الأهلية."
+            f"المحترم ولي أمر الطالب/ {student_name}\n"
+            f"السلام عليكم ورحمة الله وبركاته،،\n"
+            f"يسر إدارة مدرسة الثغر النموذجية الأهلية تهنئتكم بالمستوى المتميز لابنكم في التقييم الأسبوعي، حيث حصل على نسبة إتقان ({score}%).\n"
+            f"نبارك لكم هذا التفوق ونتمنى له دوام النجاح والتميز.\n"
+            f"مع تحيات إدارة المدرسة."
         )
 
-# =========================================================
-# 3. قائمة الطلاب الأساسية
-# =========================================================
+### =========================================================
+### 4. قاعدة بيانات الطلاب الكاملة (جميع المراحل والشعب - 167 طالب)
+### =========================================================
 STUDENTS_DB_GRADES = {
     "الأول المتوسط": {
         1: [
@@ -504,7 +516,6 @@ STUDENTS_DB_GRADES = {
         ]
     }
 }
-
 ### =========================================================
 ### 5. إعدادات الصفحة والتنسيقات المخصصة الشاملة (CSS & Print Setup)
 ### =========================================================
@@ -526,62 +537,82 @@ html, body, .stApp {
     background-color: #f8fafc;
 }
 
-/* الحفاظ على خط الأيقونات لتجنب تداخل النصوص مثل keyboard_arrow */
-[data-testid="stIcon"], [class*="material-symbols"], [class*="Material"], [class*="icon"], i {
-    font-family: 'Material Symbols Outlined', 'Material Icons' !important;
+/* إصلاح ارتفاء الأسطر لمنع تداخل النصوص كلياً */
+p, span, label, div, h1, h2, h3, h4, h5, h6 {
+    font-family: 'Cairo', sans-serif !important;
+    line-height: 1.8 !important;
 }
-.stApp {
-    background-color: #F8FAFC;
+
+/* حل تداخل الأيقونات والنصوص في القوائم المنسدلة st.expander */
+details summary, [data-testid="stExpander"] summary {
+    padding-right: 55px !important;
+    padding-left: 15px !important;
+    direction: rtl !important;
+    text-align: right !important;
+    line-height: 1.8 !important;
+    position: relative !important;
 }
-.national-day-banner {
-    background: linear-gradient(135deg, #046A38 0%, #004B23 100%);
-    color: #FFFFFF;
-    padding: 18px;
-    border-radius: 12px;
-    text-align: center;
-    margin-bottom: 20px;
-    box-shadow: 0 4px 12px rgba(4, 106, 56, 0.2);
-    border: 2px solid #D4AF37;
+
+details summary p, [data-testid="stExpander"] summary p {
+    margin: 0 !important;
+    font-size: 14px !important;
+    font-weight: 600 !important;
+    color: #1e293b !important;
+    line-height: 1.8 !important;
 }
-.national-day-title {
-    font-size: 22px;
-    font-weight: 800;
-    color: #FFFFFF;
-    margin-bottom: 4px;
+
+[data-testid="stExpander"] summary svg, 
+[data-testid="stExpander"] summary span[data-testid="stExpanderToggleIcon"] {
+    position: absolute !important;
+    right: 15px !important;
+    top: 50% !important;
+    transform: translateY(-50%) !important;
 }
-.national-day-sub {
-    font-size: 14px;
-    color: #F3F4F6;
-    font-weight: 600;
+
+div[data-testid="stExpander"] div[data-testid="stMarkdownContainer"] {
+    direction: rtl !important;
+    text-align: right !important;
+    line-height: 1.8 !important;
 }
-.status-badge-ok {
-    background-color: #DCFCE7;
-    color: #15803D;
-    padding: 6px 12px;
-    border-radius: 20px;
-    font-weight: 700;
-    font-size: 13px;
-    display: inline-block;
+
+/* ضبط عناصر المدخلات والقوائم المنسدلة بدون تداخل */
+[data-testid="stSelectbox"] label p, [data-testid="stNumberInput"] label p {
+    font-weight: 700 !important;
+    color: #1e293b !important;
+    margin-bottom: 4px !important;
 }
-.status-badge-off {
-    background-color: #FEE2E2;
-    color: #B91C1C;
-    padding: 6px 12px;
-    border-radius: 20px;
-    font-weight: 700;
-    font-size: 13px;
-    display: inline-block;
+
+[data-testid="stSelectbox"] div[data-baseweb="select"] {
+    direction: rtl !important;
+    text-align: right !important;
 }
-.student-card {
-    background: white;
-    padding: 12px 16px;
-    border-radius: 8px;
-    border-right: 4px solid #1E3C72;
-    margin-bottom: 8px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+
+[data-testid="stNumberInput"] input {
+    text-align: center !important;
+    font-weight: bold !important;
 }
-</style>
-""", unsafe_allow_html=True)
+
+/* ضبط مربع الخيار Checkbox و Radio دون تداخل */
+[data-testid="stCheckbox"] label, [data-testid="stRadio"] label {
+    display: flex !important;
+    align-items: center !important;
+    gap: 10px !important;
+    direction: rtl !important;
+}
+
+/* تحسين الميتريكس والبطاقات */
+[data-testid="stMetricValue"] {
+    font-size: 1.8rem !important;
+    font-weight: 800 !important;
+    line-height: 1.4 !important;
+    color: #1f4e78 !important;
+}
+[data-testid="stMetricLabel"] {
+    font-size: 0.95rem !important;
+    font-weight: 600 !important;
+    line-height: 1.4 !important;
+    color: #495057 !important;
+}
 
 /* شارات حالة الاتصال */
 .status-badge-ok {
@@ -1071,8 +1102,9 @@ elif page == "🏫 إدارة المدرسة وتقارير أولياء الأ�
             <br/>
             <table style="width: 100%; margin-top: 25px; border: none; text-align: center; font-size: 13px; font-weight: bold;">
                 <tr>
-                    <td style="width: 50%; border: none;">معلم الفصل / المادة:<br/><br/>...........................</td>
-                    <td style="width: 50%; border: none;">مدير المدرسة:<br/><br/>...........................</td>
+                    <td style="width: 33%; border: none;">وكيل شؤون الطلاب:<br/><br/>صالح بن عبدالله الدعجاني </td>
+                <td style="width: 33%; border: none;">وكيل الشؤون التعليمية:<br/><br/>محمد مبروك السيد </td>
+                <td style="width: 34%; border: none;">مدير المدرسة:<br/><br/>إبراهيم بن موسى التميمي </td>
                 </tr>
             </table>
         </div>
