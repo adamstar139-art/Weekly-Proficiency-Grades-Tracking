@@ -846,7 +846,7 @@ elif page == "🏫 إدارة المدرسة وتقارير أولياء الأ�
                             <span style="background: #fef3c7; color: #92400e; padding: 5px 12px; border-radius: 6px; font-weight: 700; border: 1px solid #fde68a;">📱 الجوال: {item['phone']}</span>
                         </div>
                         <div style="background-color: #f8fafc; border-right: 4px solid #005A2B; padding: 14px 18px; border-radius: 8px; color: #0f172a; font-size: 14px; line-height: 1.8; margin-bottom: 16px; word-wrap: break-word;">
-                            <b style="color: #005A2B;">💬 نص الرسالة الموجهة لولي الأمر:</b><br/>
+                            <b style="color: #005A2B;"> نص الرسالة الموجهة لولي الأمر:</b><br/>
                             {item['message']}
                         </div>
                     </div>
