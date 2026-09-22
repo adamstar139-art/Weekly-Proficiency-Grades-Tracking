@@ -109,7 +109,7 @@ def render_saudi_header(page_title=""):
     box-shadow: 0 6px 18px rgba(0, 108, 53, 0.25);
     text-align: center;
     direction: rtl;
-    font-family: 'Cairo', sans-serif;
+    font-family: 'Almarai', 'Tajawal', 'Cairo', sans-serif;
     ">
         <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 15px;">
             <div style="text-align: right;">
@@ -145,7 +145,7 @@ def print_button(label="🖨️ طباعة التقرير", button_id="print_btn
     <!DOCTYPE html>
     <html>
     <head>
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Almarai:wght@400;700;800&family=Tajawal:wght@500;700&family=Cairo:wght@600;700&display=swap" rel="stylesheet">
     <style>
     body {{ margin: 0; padding: 0; background: transparent; text-align: right; direction: rtl; }}
     .print-btn-style {{
@@ -157,7 +157,7 @@ def print_button(label="🖨️ طباعة التقرير", button_id="print_btn
         cursor: pointer;
         font-size: 15px;
         font-weight: 700;
-        font-family: 'Cairo', sans-serif;
+        font-family: 'Almarai', 'Tajawal', 'Cairo', sans-serif;
         display: inline-flex;
         align-items: center;
         justify-content: center;
@@ -519,221 +519,74 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-st.markdown("""
-    <style>
-    /* 1. استيراد الخطوط العربية الرسمية المعتمدة من Google Fonts */
-    @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&family=Tajawal:wght@400;500;700;800&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap');
+# 🎨 محدد الخطوط الشامل للمنصة والتقارير
+font_choice = st.sidebar.selectbox(
+    "🎨 اختر نوع الخط للمنصة والتقارير:",
+    [
+        "خط المراعي (Almarai) - الموصى به 🌟",
+        "خط تجوال (Tajawal) - أنيق وعصري",
+        "خط ألكسندريا (Alexandria) - حديث ومريح",
+        "خط القاهرة (Cairo) - كلاسيكي عريض"
+    ],
+    key="global_app_font_choice"
+)
 
-    /* 2. ضبط الخط العربي والاتجاه RTL لكافة المكونات */
-    html, body, [class*="css"], [class*="st-"], .stMarkdown, .stSelectbox, .stTextInput, .stNumberInput, .stButton, .stTabs, .stMetric, .stRadio, .stCheckbox {
-        font-family: 'Cairo', 'Tajawal', 'IBM Plex Sans Arabic', -apple-system, BlinkMacSystemFont, sans-serif !important;
-        direction: rtl !important;
-        text-align: right !important;
-    }
+if "تجوال" in font_choice:
+    chosen_font = "'Tajawal', sans-serif"
+    font_import_url = "https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap"
+elif "ألكسندريا" in font_choice:
+    chosen_font = "'Alexandria', sans-serif"
+    font_import_url = "https://fonts.googleapis.com/css2?family=Alexandria:wght@400;600;700;800&display=swap"
+elif "القاهرة" in font_choice:
+    chosen_font = "'Cairo', sans-serif"
+    font_import_url = "https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap"
+else:
+    chosen_font = "'Almarai', sans-serif"
+    font_import_url = "https://fonts.googleapis.com/css2?family=Almarai:wght@300;400;700;800&display=swap"
 
-    /* 3. العناوين والنصوص */
-    h1, h2, h3, h4, h5, h6 {
-        font-family: 'Cairo', sans-serif !important;
-        font-weight: 800 !important;
-        color: #006C35;
-        letter-spacing: -0.2px;
-    }
+st.markdown(f"""
+<style>
+@import url('{font_import_url}');
+@import url('https://fonts.googleapis.com/css2?family=Almarai:wght@300;400;700;800&family=Tajawal:wght@400;500;700;800&family=Alexandria:wght@400;600;700;800&family=Cairo:wght@400;600;700;800&display=swap');
 
-    /* 4. تصميم ورقة التقرير المطبوع والعروض الرسمية (.report-paper) */
-    .report-paper {
-        background-color: #ffffff;
-        border: 1px solid #e2e8f0;
-        border-top: 6px solid #006C35;
-        border-radius: 12px;
-        padding: 32px 36px;
-        margin-top: 15px;
-        margin-bottom: 30px;
-        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
-        font-family: 'Cairo', 'Tajawal', sans-serif;
-        color: #1e293b;
-        direction: rtl;
-    }
+html, body, [class*="css"], .stApp, .stMarkdown, p, h1, h2, h3, h4, h5, h6, span, label, input, button, select, textarea, div {{
+    font-family: {chosen_font} !important;
+    direction: rtl !important;
+}}
 
-    /* 5. ترويسة التقرير الرسمية (.report-header-table) */
-    .report-header-table {
-        width: 100%;
-        border-collapse: collapse;
-        border-bottom: 2px solid #006C35;
-        padding-bottom: 16px;
-        margin-bottom: 22px;
-    }
-    .report-header-table td {
-        border: none !important;
-        vertical-align: middle;
-        padding: 4px 8px;
-    }
+/* تخصيص التقرير للطباعة والعرض المباشر */
+.report-paper, .print-full-section, .print-class-section {{
+    font-family: {chosen_font} !important;
+}}
 
-    /* 6. جدول التقرير القابل للطباعة (.printable-table) */
-    .printable-table {
-        width: 100%;
-        border-collapse: collapse;
-        margin-top: 15px;
-        font-family: 'Cairo', sans-serif;
-        font-size: 13.5px;
-        background-color: #ffffff;
-    }
+.report-header-table, .printable-table, .printable-table th, .printable-table td {{
+    font-family: {chosen_font} !important;
+}}
 
-    .printable-table th {
-        background: linear-gradient(135deg, #006C35 0%, #004D25 100%);
-        color: #ffffff !important;
-        font-weight: 800;
-        font-size: 14px;
-        padding: 12px 10px;
-        text-align: center;
-        border: 1px solid #004D25;
-        letter-spacing: 0.2px;
-    }
+.printable-table th {{
+    font-weight: 700 !important;
+    letter-spacing: -0.2px;
+    font-size: 13px !important;
+}}
 
-    .printable-table td {
-        padding: 10px 12px;
-        border: 1px solid #cbd5e1;
-        text-align: center;
-        vertical-align: middle;
-        color: #0f172a;
-        font-weight: 600;
-    }
+.printable-table td {{
+    font-weight: 500 !important;
+    font-size: 13px !important;
+}}
 
-    .printable-table tbody tr:nth-child(even) {
-        background-color: #f8fafc;
-    }
+/* تحسين بطاقة معاينة الرسائل */
+.msg-preview-card {{
+    font-family: {chosen_font} !important;
+    line-height: 1.8 !important;
+    font-size: 14px !important;
+}}
 
-    .printable-table tbody tr:hover {
-        background-color: #f1f5f9;
-    }
-
-    /* 7. وسوم الحالة الملونة داخل الجداول (.badge-status) */
-    .badge-status {
-        display: inline-block;
-        padding: 4px 12px;
-        border-radius: 20px;
-        font-size: 12.5px;
-        font-weight: 800;
-        text-align: center;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-    }
-    .badge-excellent {
-        background-color: #dcfce7;
-        color: #15803d;
-        border: 1px solid #bbf7d0;
-    }
-    .badge-good {
-        background-color: #dbeafe;
-        color: #1d4ed8;
-        border: 1px solid #bfdbfe;
-    }
-    .badge-warning {
-        background-color: #fee2e2;
-        color: #b91c1c;
-        border: 1px solid #fecaca;
-    }
-    .badge-absent {
-        background-color: #f1f5f9;
-        color: #475569;
-        border: 1px solid #cbd5e1;
-    }
-
-    /* 8. بطاقات الخطوات والرسائل المنسقة */
-    .step-box {
-        background-color: #ffffff;
-        border-right: 6px solid #006C35;
-        border-radius: 10px;
-        padding: 18px 22px;
-        margin-bottom: 22px;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.04);
-        border-top: 1px solid #f1f5f9;
-        border-left: 1px solid #f1f5f9;
-        border-bottom: 1px solid #f1f5f9;
-    }
-    .step-header {
-        font-size: 17px;
-        font-weight: 800;
-        color: #006C35;
-        margin-bottom: 6px;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        font-family: 'Cairo', sans-serif;
-    }
-
-    .msg-preview-card {
-        background-color: #f8fafc;
-        border: 1px solid #cbd5e1;
-        border-radius: 10px;
-        padding: 16px;
-        margin-top: 10px;
-        font-family: 'Cairo', sans-serif;
-        line-height: 1.8;
-        color: #1e293b;
-        font-size: 14px;
-    }
-
-    /* 9. شارات حالة الاتصال بالشريط الجانبي */
-    .status-badge-ok {
-        background-color: #dcfce7;
-        color: #15803d;
-        padding: 6px 12px;
-        border-radius: 8px;
-        font-size: 12px;
-        font-weight: 700;
-        border: 1px solid #bbf7d0;
-        text-align: center;
-    }
-    .status-badge-off {
-        background-color: #fee2e2;
-        color: #b91c1c;
-        padding: 6px 12px;
-        border-radius: 8px;
-        font-size: 12px;
-        font-weight: 700;
-        border: 1px solid #fecaca;
-        text-align: center;
-    }
-
-    /* 10. قواعد الطباعة المتقدمة الاحترافية (@media print) */
-    @media print {
-        @page {
-            size: A4 portrait;
-            margin: 10mm 8mm;
-        }
-        body {
-            background-color: #ffffff !important;
-            font-family: 'Cairo', sans-serif !important;
-            color: #000000 !important;
-            -webkit-print-color-adjust: exact !important;
-            print-color-adjust: exact !important;
-        }
-        body.mode-print-full .print-class-section { display: none !important; }
-        body.mode-print-class .print-full-section { display: none !important; }
-        .no-print, header, footer, [data-testid="stSidebar"], .stButton, [data-testid="stHeader"] { 
-            display: none !important; 
-        }
-        .report-paper {
-            border: none !important;
-            box-shadow: none !important;
-            padding: 0 !important;
-            margin: 0 !important;
-            width: 100% !important;
-        }
-        .printable-table th {
-            background-color: #006C35 !important;
-            color: #ffffff !important;
-            -webkit-print-color-adjust: exact !important;
-        }
-        .printable-table td {
-            border: 1px solid #64748b !important;
-            font-size: 12px !important;
-            padding: 7px 9px !important;
-        }
-        tr { page-break-inside: avoid !important; }
-    }
-    </style>
+/* تحسين الخطوط في عناصر المقياس Metrics */
+[data-testid="stMetricValue"], [data-testid="stMetricLabel"] {{
+    font-family: {chosen_font} !important;
+}}
+</style>
 """, unsafe_allow_html=True)
-
 
 ### الشريط الجانبي
 st.sidebar.title("📌 القائمة الرئيسية")
@@ -877,7 +730,7 @@ elif page == "🏫 إدارة المدرسة وتقارير أولياء الأ�
         border-radius: 8px;
         padding: 14px;
         margin-top: 8px;
-        font-family: 'Cairo', sans-serif;
+        font-family: 'Almarai', 'Tajawal', 'Cairo', sans-serif;
         line-height: 1.6;
         color: #1e293b;
     }
@@ -981,18 +834,13 @@ elif page == "🏫 إدارة المدرسة وتقارير أولياء الأ�
 
         rows_html = ""
         for idx, s in enumerate(all_students_flat):
-            status_txt = (
-                '<span class="badge-status badge-absent">غائب ⚪</span>' if s['is_absent'] == 1 else
-                ('<span class="badge-status badge-excellent">متفوق 🟢</span>' if s['score'] >= 76 else
-                ('<span class="badge-status badge-good">جيد 🔵</span>' if s['score'] >= 50 else
-                '<span class="badge-status badge-warning">يحتاج متابعة 🔴</span>'))
-            )
+            status_txt = "غائب ⚪" if s['is_absent'] == 1 else ("متفوق 🟢" if s['score'] >= 76 else ("جيد 🔵" if s['score'] >= 50 else "يحتاج متابعة 🔴"))
             score_txt = f"{s['score']}%" if s['is_absent'] == 0 else "-"
             rows_html += f"""
             <tr>
                 <td>{idx+1}</td>
                 <td>{s['id']}</td>
-                <td style="text-align: right; padding-right: 14px; font-weight: 700; color: #0f172a; font-family: 'Cairo', sans-serif;">{s['name']}</td>
+                <td style="text-align: right; padding-right: 12px; font-weight: 600;">{s['name']}</td>
                 <td>{s['grade']}</td>
                 <td>فصل {s['class']}</td>
                 <td style="font-weight: bold;">{score_txt}</td>
@@ -1011,7 +859,7 @@ elif page == "🏫 إدارة المدرسة وتقارير أولياء الأ�
                         <strong>مدرسة الثغر النموذجية الأهلية المتوسطة</strong>
                     </td>
                     <td style="width: 40%; text-align: center;">
-                        <h3 style="margin:0; color:#006C35; font-family:'Cairo'; font-weight:bold;">📋 التقرير الشامل لدرجات الإتقان الأسبوعية</h3>
+                        <h3 style="margin:0; color:#006C35; font-family:'Almarai', 'Tajawal', 'Cairo'; font-weight:bold;">📋 التقرير الشامل لدرجات الإتقان الأسبوعية</h3>
                         <div style="font-size: 13px; color:#475569; margin-top:4px;">{selected_term} - {selected_week}</div>
                     </td>
                     <td style="width: 30%; text-align: left; font-size: 12px; line-height: 1.4;">
@@ -1077,18 +925,13 @@ elif page == "🏫 إدارة المدرسة وتقارير أولياء الأ�
             today_str = datetime.now().strftime("%Y/%m/%d")
             class_rows_html = ""
             for idx, s in enumerate(class_students):
-                status_txt = (
-                '<span class="badge-status badge-absent">غائب ⚪</span>' if s['is_absent'] == 1 else
-                ('<span class="badge-status badge-excellent">متفوق 🟢</span>' if s['score'] >= 76 else
-                ('<span class="badge-status badge-good">جيد 🔵</span>' if s['score'] >= 50 else
-                '<span class="badge-status badge-warning">يحتاج متابعة 🔴</span>'))
-            )
+                status_txt = "غائب ⚪" if s['is_absent'] == 1 else ("متفوق 🟢" if s['score'] >= 76 else ("جيد 🔵" if s['score'] >= 50 else "يحتاج متابعة 🔴"))
                 score_txt = f"{s['score']}%" if s['is_absent'] == 0 else "-"
                 class_rows_html += f"""
                 <tr>
                     <td>{idx+1}</td>
                     <td>{s['id']}</td>
-                    <td style="text-align: right; padding-right: 14px; font-weight: 700; color: #0f172a; font-family: 'Cairo', sans-serif;">{s['name']}</td>
+                    <td style="text-align: right; padding-right: 12px; font-weight: 600;">{s['name']}</td>
                     <td style="font-weight: bold;">{score_txt}</td>
                     <td>{status_txt}</td>
                 </tr>
@@ -1105,7 +948,7 @@ elif page == "🏫 إدارة المدرسة وتقارير أولياء الأ�
                             <strong>مدرسة الثغر النموذجية الأهلية المتوسطة</strong>
                         </td>
                         <td style="width: 40%; text-align: center;">
-                            <h3 style="margin:0; color:#006C35; font-family:'Cairo'; font-weight:bold;">🏫 تقرير تقييم الصف الدراسي</h3>
+                            <h3 style="margin:0; color:#006C35; font-family:'Almarai', 'Tajawal', 'Cairo'; font-weight:bold;">🏫 تقرير تقييم الصف الدراسي</h3>
                             <div style="font-size: 14px; color:#1e293b; font-weight:bold; margin-top:4px;">{selected_rep_grade} - فصل ({selected_rep_class})</div>
                             <div style="font-size: 12px; color:#64748b;">{selected_term} - {selected_week}</div>
                         </td>
