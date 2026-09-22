@@ -93,40 +93,13 @@ def fetch_student_phones_db():
     except Exception:
         return {}
 
-def add_student_to_supabase(student_id, name, grade, class_num, phone):
-    sb = get_supabase()
-    if sb is None:
-        return True
-    try:
-        payload = {
-            "student_id": str(student_id),
-            "name": name,
-            "grade": grade,
-            "class": int(class_num),
-            "phone": str(phone)
-        }
-        sb.table("thaghr_students_info").upsert(payload).execute()
-        return True
-    except Exception:
-        return False
-
-def delete_student_from_supabase(student_id):
-    sb = get_supabase()
-    if sb is None:
-        return True
-    try:
-        sb.table("thaghr_students_info").delete().eq("student_id", str(student_id)).execute()
-        return True
-    except Exception:
-        return False
-
 ##### =========================================================
 ##### 1. دالة الترويسة السعودية باللون الأخضر (Saudi Identity Header)
 ##### =========================================================
 def render_saudi_header(page_title=""):
     """عرض ترويسة باللون الأخضر بالهوية السعودية الرسمية لمدرسة الثغر النموذجية"""
     header_html = f"""
-    <div class="no-print" style="
+    <div style="
     background: linear-gradient(135deg, #005027 0%, #006C35 50%, #004D25 100%);
     color: #ffffff;
     border-radius: 12px;
@@ -342,7 +315,7 @@ def generate_parent_message(student_name, score, is_absent):
         )
 
 ##### =========================================================
-##### 4. قاعدة بيانات الطلاب الكاملة وإدارة حالة الجلسة
+##### 4. قاعدة بيانات الطلاب الكاملة (جميع المراحل والشعب - 167 طالب)
 ##### =========================================================
 STUDENTS_DB_GRADES = {
     "الأول المتوسط": {
@@ -536,12 +509,6 @@ STUDENTS_DB_GRADES = {
     }
 }
 
-def get_students_db():
-    """الدالة الأساسية لإعادة قاموس الطلاب التفاعلي وتجنب خطأ NameError"""
-    if "students_db" not in st.session_state:
-        st.session_state["students_db"] = copy.deepcopy(STUDENTS_DB_GRADES)
-    return st.session_state["students_db"]
-
 ##### =========================================================
 ##### 5. إعدادات الصفحة والتنسيقات المخصصة الشاملة (CSS & Print Setup)
 ##### =========================================================
@@ -552,93 +519,221 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# تطبيق اتجاه RTL بالكامل على مستوى الصفحة
 st.markdown("""
-<style>
-@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap');
+    <style>
+    /* 1. استيراد الخطوط العربية الرسمية المعتمدة من Google Fonts */
+    @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&family=Tajawal:wght@400;500;700;800&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap');
 
-html, body, [data-testid="stAppViewContainer"], [data-testid="stSidebar"] {
-    direction: rtl !important;
-    text-align: right !important;
-    font-family: 'Cairo', sans-serif !important;
-}
+    /* 2. ضبط الخط العربي والاتجاه RTL لكافة المكونات */
+    html, body, [class*="css"], [class*="st-"], .stMarkdown, .stSelectbox, .stTextInput, .stNumberInput, .stButton, .stTabs, .stMetric, .stRadio, .stCheckbox {
+        font-family: 'Cairo', 'Tajawal', 'IBM Plex Sans Arabic', -apple-system, BlinkMacSystemFont, sans-serif !important;
+        direction: rtl !important;
+        text-align: right !important;
+    }
 
-[data-testid="stSidebar"] {
-    border-left: 1px solid #006C35;
-}
+    /* 3. العناوين والنصوص */
+    h1, h2, h3, h4, h5, h6 {
+        font-family: 'Cairo', sans-serif !important;
+        font-weight: 800 !important;
+        color: #006C35;
+        letter-spacing: -0.2px;
+    }
 
-.stButton > button {
-    font-family: 'Cairo', sans-serif !important;
-    font-weight: 700 !important;
-    border-radius: 8px !important;
-}
+    /* 4. تصميم ورقة التقرير المطبوع والعروض الرسمية (.report-paper) */
+    .report-paper {
+        background-color: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-top: 6px solid #006C35;
+        border-radius: 12px;
+        padding: 32px 36px;
+        margin-top: 15px;
+        margin-bottom: 30px;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+        font-family: 'Cairo', 'Tajawal', sans-serif;
+        color: #1e293b;
+        direction: rtl;
+    }
 
-/* بطاقات وتنسيقات الرسائل والخطوات */
-.step-box {
-    background-color: #ffffff;
-    border-right: 5px solid #006C35;
-    border-radius: 10px;
-    padding: 16px 20px;
-    margin-bottom: 20px;
-    box-shadow: 0 3px 10px rgba(0,0,0,0.05);
-    border-top: 1px solid #f1f5f9;
-    border-left: 1px solid #f1f5f9;
-    border-bottom: 1px solid #f1f5f9;
-}
+    /* 5. ترويسة التقرير الرسمية (.report-header-table) */
+    .report-header-table {
+        width: 100%;
+        border-collapse: collapse;
+        border-bottom: 2px solid #006C35;
+        padding-bottom: 16px;
+        margin-bottom: 22px;
+    }
+    .report-header-table td {
+        border: none !important;
+        vertical-align: middle;
+        padding: 4px 8px;
+    }
 
-.step-header {
-    font-size: 16px;
-    font-weight: 800;
-    color: #006C35;
-    margin-bottom: 10px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
+    /* 6. جدول التقرير القابل للطباعة (.printable-table) */
+    .printable-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 15px;
+        font-family: 'Cairo', sans-serif;
+        font-size: 13.5px;
+        background-color: #ffffff;
+    }
 
-.msg-preview-card {
-    background-color: #f8fafc;
-    border: 1px solid #cbd5e1;
-    border-radius: 8px;
-    padding: 14px;
-    margin-top: 8px;
-    font-family: 'Cairo', sans-serif;
-    line-height: 1.8;
-    color: #1e293b;
-    direction: rtl;
-    text-align: right;
-}
+    .printable-table th {
+        background: linear-gradient(135deg, #006C35 0%, #004D25 100%);
+        color: #ffffff !important;
+        font-weight: 800;
+        font-size: 14px;
+        padding: 12px 10px;
+        text-align: center;
+        border: 1px solid #004D25;
+        letter-spacing: 0.2px;
+    }
 
-.status-badge-ok {
-    background-color: #e6f4ea;
-    color: #006C35;
-    padding: 6px 12px;
-    border-radius: 6px;
-    font-weight: 700;
-    font-size: 12px;
-    text-align: center;
-    border: 1px solid #a3e0b5;
-}
+    .printable-table td {
+        padding: 10px 12px;
+        border: 1px solid #cbd5e1;
+        text-align: center;
+        vertical-align: middle;
+        color: #0f172a;
+        font-weight: 600;
+    }
 
-.status-badge-off {
-    background-color: #fce8e6;
-    color: #c5221f;
-    padding: 6px 12px;
-    border-radius: 6px;
-    font-weight: 700;
-    font-size: 12px;
-    text-align: center;
-    border: 1px solid #f5c2c7;
-}
+    .printable-table tbody tr:nth-child(even) {
+        background-color: #f8fafc;
+    }
 
-/* قواعد طباعة صارمة تمنع تداخل التقارير وتخفي العشواءيات */
-@media print {
-    body.mode-print-full .print-class-section { display: none !important; }
-    body.mode-print-class .print-full-section { display: none !important; }
-    .no-print, header, footer, [data-testid="stSidebar"], .stButton, iframe { display: none !important; }
-}
-</style>
+    .printable-table tbody tr:hover {
+        background-color: #f1f5f9;
+    }
+
+    /* 7. وسوم الحالة الملونة داخل الجداول (.badge-status) */
+    .badge-status {
+        display: inline-block;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 12.5px;
+        font-weight: 800;
+        text-align: center;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+    .badge-excellent {
+        background-color: #dcfce7;
+        color: #15803d;
+        border: 1px solid #bbf7d0;
+    }
+    .badge-good {
+        background-color: #dbeafe;
+        color: #1d4ed8;
+        border: 1px solid #bfdbfe;
+    }
+    .badge-warning {
+        background-color: #fee2e2;
+        color: #b91c1c;
+        border: 1px solid #fecaca;
+    }
+    .badge-absent {
+        background-color: #f1f5f9;
+        color: #475569;
+        border: 1px solid #cbd5e1;
+    }
+
+    /* 8. بطاقات الخطوات والرسائل المنسقة */
+    .step-box {
+        background-color: #ffffff;
+        border-right: 6px solid #006C35;
+        border-radius: 10px;
+        padding: 18px 22px;
+        margin-bottom: 22px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.04);
+        border-top: 1px solid #f1f5f9;
+        border-left: 1px solid #f1f5f9;
+        border-bottom: 1px solid #f1f5f9;
+    }
+    .step-header {
+        font-size: 17px;
+        font-weight: 800;
+        color: #006C35;
+        margin-bottom: 6px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-family: 'Cairo', sans-serif;
+    }
+
+    .msg-preview-card {
+        background-color: #f8fafc;
+        border: 1px solid #cbd5e1;
+        border-radius: 10px;
+        padding: 16px;
+        margin-top: 10px;
+        font-family: 'Cairo', sans-serif;
+        line-height: 1.8;
+        color: #1e293b;
+        font-size: 14px;
+    }
+
+    /* 9. شارات حالة الاتصال بالشريط الجانبي */
+    .status-badge-ok {
+        background-color: #dcfce7;
+        color: #15803d;
+        padding: 6px 12px;
+        border-radius: 8px;
+        font-size: 12px;
+        font-weight: 700;
+        border: 1px solid #bbf7d0;
+        text-align: center;
+    }
+    .status-badge-off {
+        background-color: #fee2e2;
+        color: #b91c1c;
+        padding: 6px 12px;
+        border-radius: 8px;
+        font-size: 12px;
+        font-weight: 700;
+        border: 1px solid #fecaca;
+        text-align: center;
+    }
+
+    /* 10. قواعد الطباعة المتقدمة الاحترافية (@media print) */
+    @media print {
+        @page {
+            size: A4 portrait;
+            margin: 10mm 8mm;
+        }
+        body {
+            background-color: #ffffff !important;
+            font-family: 'Cairo', sans-serif !important;
+            color: #000000 !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+        }
+        body.mode-print-full .print-class-section { display: none !important; }
+        body.mode-print-class .print-full-section { display: none !important; }
+        .no-print, header, footer, [data-testid="stSidebar"], .stButton, [data-testid="stHeader"] { 
+            display: none !important; 
+        }
+        .report-paper {
+            border: none !important;
+            box-shadow: none !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            width: 100% !important;
+        }
+        .printable-table th {
+            background-color: #006C35 !important;
+            color: #ffffff !important;
+            -webkit-print-color-adjust: exact !important;
+        }
+        .printable-table td {
+            border: 1px solid #64748b !important;
+            font-size: 12px !important;
+            padding: 7px 9px !important;
+        }
+        tr { page-break-inside: avoid !important; }
+    }
+    </style>
 """, unsafe_allow_html=True)
+
 
 ### الشريط الجانبي
 st.sidebar.title("📌 القائمة الرئيسية")
@@ -651,56 +746,49 @@ st.sidebar.markdown("---")
 st.sidebar.subheader("📱 إعدادات البوابات والرسائل")
 
 with st.sidebar.expander("💬 إعدادات WhatsApp Direct API (إرسال تلقائي دون فتح التطبيق)"):
-    wa_instance = st.sidebar.text_input("Instance ID:", value="", key="sb_wa_instance_id")
-    wa_token = st.sidebar.text_input("API Token:", value="", type="password", key="sb_wa_api_token")
+    wa_instance = st.text_input("Instance ID:", value="", key="wa_inst_inp")
+    wa_token = st.text_input("API Token:", value="", type="password", key="wa_tok_inp")
     st.caption("💡 باستخدام هذه الإعدادات، يتم إرسال رسائل الواتساب مباشرة للطلاب في الخلفية فور الضغط على زر الإرسال بنقرة واحدة.")
 
 with st.sidebar.expander("📱 إعدادات Mora SMS"):
-    mora_user = st.sidebar.text_input("اسم المستخدم / الرقم:", value="966508634881", key="sb_mora_username")
-    mora_pass = st.sidebar.text_input("كلمة المرور:", value="THA@0508634881", type="password", key="sb_mora_password")
-    mora_sender = st.sidebar.text_input("اسم المرسل المعتمد:", value="THAGHR-S", key="sb_mora_sender_id")
-    mora_otp = st.sidebar.text_input("كود التحقق / OTP (إذا طلب):", value="", key="sb_mora_otp_code")
+    mora_user = st.text_input("اسم المستخدم / الرقم:", value="966508634881", key="mora_u")
+    mora_pass = st.text_input("كلمة المرور:", value="THA@0508634881", type="password", key="mora_p")
+    mora_sender = st.text_input("اسم المرسل المعتمد:", value="THAGHR-S", key="mora_s")
+    mora_otp = st.text_input("كود التحقق / OTP (إذا طلب):", value="", key="mora_otp_input")
 
 st.sidebar.markdown("---")
-page = st.sidebar.radio("اختر الصفحة:", [
-    "📝 صفحة الرصد",
-    "🏫 إدارة المدرسة وتقارير أولياء الأمور",
-    "👥 إدارة الطلاب (إضافة • حذف • نقل)"
-], key="sb_main_nav_radio")
-
+page = st.sidebar.radio("اختر الصفحة:", ["📝 صفحة الرصد", "🏫 إدارة المدرسة وتقارير أولياء الأمور"])
 st.sidebar.markdown("---")
 st.sidebar.markdown("<div style='text-align: center; color: #006C35; font-weight: bold; font-size: 13px; background-color: #e6f4ea; padding: 8px; border-radius: 8px; border: 1px solid #c3e6cb;'>✨ تصميم أ/ محمد سامي السعيد</div>", unsafe_allow_html=True)
-
-# جلب قاعدة بيانات الطلاب التفاعلية
-current_students_db = get_students_db()
 
 ##### =========================================================
 ##### الصفحة الأولى: صفحة الرصد (RECORDING SHEET)
 ##### =========================================================
 if page == "📝 صفحة الرصد":
+    # الترويسة السعودية باللون الأخضر
     render_saudi_header("صفحة رصد درجات الإتقان الأسبوعية")
 
     col_sel1, col_sel2, col_sel3 = st.columns(3)
     with col_sel1:
-        selected_grade = st.selectbox("اختر المرحلة / الصف الدراسي:", list(current_students_db.keys()), key="rec_grade_sel")
+        selected_grade = st.selectbox("اختر المرحلة / الصف الدراسي:", list(STUDENTS_DB_GRADES.keys()))
     with col_sel2:
-        classes_list = list(current_students_db[selected_grade].keys())
-        selected_class = st.selectbox("اختر الفصل:", classes_list, key="rec_class_sel")
+        classes_list = list(STUDENTS_DB_GRADES[selected_grade].keys())
+        selected_class = st.selectbox("اختر الفصل:", classes_list)
     with col_sel3:
         terms_list = ["الفصل الدراسي الأول", "الفصل الدراسي الثاني"]
-        selected_term = st.selectbox("اختر الفصل الدراسي:", terms_list, key="rec_term_sel")
+        selected_term = st.selectbox("اختر الفصل الدراسي:", terms_list)
 
     col_w1, col_w2 = st.columns(2)
     with col_w1:
         weeks = [f"الأسبوع {i}" for i in range(1, 19)]
-        selected_week = st.selectbox("اختر الأسبوع:", weeks, key="rec_week_sel")
+        selected_week = st.selectbox("اختر الأسبوع:", weeks)
     with col_w2:
         st.write("")
         st.info(f"📍 يتم الرصد لـ: **{selected_grade} (فصل {selected_class})** - **{selected_week}**")
 
     st.markdown("---")
 
-    students_list = current_students_db[selected_grade][selected_class]
+    students_list = STUDENTS_DB_GRADES[selected_grade][selected_class]
     db_grades_list = fetch_all_grades_db(selected_term, selected_week)
     db_grades_map = {str(g['student_id']): g for g in db_grades_list}
 
@@ -742,18 +830,70 @@ if page == "📝 صفحة الرصد":
         })
 
     st.markdown("---")
-    if st.button("💾 حفظ الدرجات في قاعدة البيانات السحابية (Supabase)", use_container_width=True, type="primary", key="rec_save_btn"):
+    if st.button("💾 حفظ الدرجات في قاعدة البيانات السحابية (Supabase)", use_container_width=True, type="primary"):
         with st.spinner("جاري حفظ البيانات في Supabase..."):
             ok = save_grades_to_db(selected_term, selected_week, form_grades)
             if ok:
                 st.success("✅ تم حفظ درجات الطلاب بنجاح وبشكل دائم!")
 
 ##### =========================================================
-##### الصفحة الثانية: إدارة المدرسة وتقارير أولياء الأمور
+##### الصفحة الثانية: إدارة المدرسة وتقارير أولياء الأمور (محدثة)
 ##### =========================================================
 elif page == "🏫 إدارة المدرسة وتقارير أولياء الأمور":
+    # الترويسة السعودية باللون الأخضر
     render_saudi_header("إدارة المدرسة وإرسال التقارير والطباعة")
 
+    # ---------------------------------------------------------
+    # تنسيقات CSS المخصصة للخطوات وفصل الطباعة تماماً
+    # ---------------------------------------------------------
+    st.markdown("""
+    <style>
+    /* تنسيق بطاقات الخطوات المتسلسلة */
+    .step-box {
+        background-color: #ffffff;
+        border-right: 5px solid #006C35;
+        border-radius: 10px;
+        padding: 16px 20px;
+        margin-bottom: 20px;
+        box-shadow: 0 3px 10px rgba(0,0,0,0.05);
+        border-top: 1px solid #f1f5f9;
+        border-left: 1px solid #f1f5f9;
+        border-bottom: 1px solid #f1f5f9;
+    }
+    .step-header {
+        font-size: 16px;
+        font-weight: 800;
+        color: #006C35;
+        margin-bottom: 10px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    /* تنسيق بطاقة الرسالة الموجهة لولي الأمر */
+    .msg-preview-card {
+        background-color: #f8fafc;
+        border: 1px solid #cbd5e1;
+        border-radius: 8px;
+        padding: 14px;
+        margin-top: 8px;
+        font-family: 'Cairo', sans-serif;
+        line-height: 1.6;
+        color: #1e293b;
+    }
+
+    /* قواعد طباعة صارمة تمنع تداخل التقارير تماماً */
+    @media print {
+        body.mode-print-full .print-class-section { display: none !important; }
+        body.mode-print-class .print-full-section { display: none !important; }
+        .no-print, header, footer, [data-testid="stSidebar"], .stButton { display: none !important; }
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
+    # ---------------------------------------------------------
+    # الخطوة 1: تحديد الفصل الدراسي والأسبوع
+    # ---------------------------------------------------------
     st.markdown("""
     <div class="step-box">
         <div class="step-header">📌 الخطوة الأولى: تحديد الفترة الزمنية للتقرير</div>
@@ -767,22 +907,18 @@ elif page == "🏫 إدارة المدرسة وتقارير أولياء الأ�
     with col_w2:
         selected_term = st.selectbox("اختر الفصل الدراسي:", ["الفصل الدراسي الأول", "الفصل الدراسي الثاني"], key="sel_trm_rep")
 
+    # تحميل البيانات بناءً على التحديد
     db_grades_list = fetch_all_grades_db(selected_term, selected_week)
     db_grades_map = {str(g['student_id']): g for g in db_grades_list}
     phone_db_map = fetch_student_phones_db()
 
     cat_red, cat_blue, cat_green, cat_gray = [], [], [], []
     all_students_flat = []
-    seen_student_ids = set()
 
-    for g_name, g_data in current_students_db.items():
+    for g_name, g_data in STUDENTS_DB_GRADES.items():
         for c_num, s_list in g_data.items():
             for s_item in s_list:
                 sid = str(s_item["id"])
-                if sid in seen_student_ids:
-                    continue
-                seen_student_ids.add(sid)
-
                 p_num = phone_db_map.get(sid, s_item.get("phone", ""))
                 rec = db_grades_map.get(sid, {})
                 sc = rec.get("score", None)
@@ -805,6 +941,9 @@ elif page == "🏫 إدارة المدرسة وتقارير أولياء الأ�
 
     st.markdown("---")
 
+    # ---------------------------------------------------------
+    # الخطوة 2: اختيار نوع التقرير المطلوب (فصل العرض تماماً)
+    # ---------------------------------------------------------
     st.markdown("""
     <div class="step-box">
         <div class="step-header">🖨️ الخطوة الثانية: اختيار التقرير المطلوب للطباعة والعرض</div>
@@ -814,12 +953,14 @@ elif page == "🏫 إدارة المدرسة وتقارير أولياء الأ�
     report_type = st.radio(
         "اختر التقرير الذي تريد عرضه وطباعته:",
         ["📋 التقرير الشامل للمدرسة", "🏫 تقرير فصل دراسي محدد"],
-        horizontal=True,
-        key="report_type_radio_selection"
+        horizontal=True
     )
 
     st.markdown("---")
 
+    # ---------------------------------------------------------
+    # الخيار الأول: التقرير الشامل (يظهر ويطبع منفرداً)
+    # ---------------------------------------------------------
     if report_type == "📋 التقرير الشامل للمدرسة":
         st.markdown("### 📊 التقرير الشامل للأسبوع المختار")
         col_rep1, col_rep2 = st.columns([3, 1])
@@ -840,13 +981,18 @@ elif page == "🏫 إدارة المدرسة وتقارير أولياء الأ�
 
         rows_html = ""
         for idx, s in enumerate(all_students_flat):
-            status_txt = "غائب ⚪" if s['is_absent'] == 1 else ("متفوق 🟢" if s['score'] >= 76 else ("جيد 🔵" if s['score'] >= 50 else "يحتاج متابعة 🔴"))
+            status_txt = (
+                '<span class="badge-status badge-absent">غائب ⚪</span>' if s['is_absent'] == 1 else
+                ('<span class="badge-status badge-excellent">متفوق 🟢</span>' if s['score'] >= 76 else
+                ('<span class="badge-status badge-good">جيد 🔵</span>' if s['score'] >= 50 else
+                '<span class="badge-status badge-warning">يحتاج متابعة 🔴</span>'))
+            )
             score_txt = f"{s['score']}%" if s['is_absent'] == 0 else "-"
             rows_html += f"""
             <tr>
                 <td>{idx+1}</td>
                 <td>{s['id']}</td>
-                <td style="text-align: right; padding-right: 12px; font-weight: 600;">{s['name']}</td>
+                <td style="text-align: right; padding-right: 14px; font-weight: 700; color: #0f172a; font-family: 'Cairo', sans-serif;">{s['name']}</td>
                 <td>{s['grade']}</td>
                 <td>فصل {s['class']}</td>
                 <td style="font-weight: bold;">{score_txt}</td>
@@ -905,14 +1051,17 @@ elif page == "🏫 إدارة المدرسة وتقارير أولياء الأ�
         """
         render_clean_html(full_report_html)
 
+    # ---------------------------------------------------------
+    # الخيار الثاني: تقرير الفصل المحدد (يظهر ويطبع منفرداً)
+    # ---------------------------------------------------------
     else:
         st.markdown("### 🏫 تقرير تقييم الصف الدراسي المحدد")
         col_g1, col_g2, col_g3 = st.columns([2, 2, 2])
 
         with col_g1:
-            selected_rep_grade = st.selectbox("اختر المرحلة الدراسية:", list(current_students_db.keys()), key="rep_grade")
+            selected_rep_grade = st.selectbox("اختر المرحلة الدراسية:", list(STUDENTS_DB_GRADES.keys()), key="rep_grade")
         with col_g2:
-            available_classes = list(current_students_db[selected_rep_grade].keys())
+            available_classes = list(STUDENTS_DB_GRADES[selected_rep_grade].keys())
             selected_rep_class = st.selectbox("اختر الفصل:", available_classes, key="rep_class")
 
         class_students = [
@@ -928,13 +1077,18 @@ elif page == "🏫 إدارة المدرسة وتقارير أولياء الأ�
             today_str = datetime.now().strftime("%Y/%m/%d")
             class_rows_html = ""
             for idx, s in enumerate(class_students):
-                status_txt = "غائب ⚪" if s['is_absent'] == 1 else ("متفوق 🟢" if s['score'] >= 76 else ("جيد 🔵" if s['score'] >= 50 else "يحتاج متابعة 🔴"))
+                status_txt = (
+                '<span class="badge-status badge-absent">غائب ⚪</span>' if s['is_absent'] == 1 else
+                ('<span class="badge-status badge-excellent">متفوق 🟢</span>' if s['score'] >= 76 else
+                ('<span class="badge-status badge-good">جيد 🔵</span>' if s['score'] >= 50 else
+                '<span class="badge-status badge-warning">يحتاج متابعة 🔴</span>'))
+            )
                 score_txt = f"{s['score']}%" if s['is_absent'] == 0 else "-"
                 class_rows_html += f"""
                 <tr>
                     <td>{idx+1}</td>
                     <td>{s['id']}</td>
-                    <td style="text-align: right; padding-right: 12px; font-weight: 600;">{s['name']}</td>
+                    <td style="text-align: right; padding-right: 14px; font-weight: 700; color: #0f172a; font-family: 'Cairo', sans-serif;">{s['name']}</td>
                     <td style="font-weight: bold;">{score_txt}</td>
                     <td>{status_txt}</td>
                 </tr>
@@ -993,6 +1147,9 @@ elif page == "🏫 إدارة المدرسة وتقارير أولياء الأ�
 
     st.markdown("---")
 
+    # ---------------------------------------------------------
+    # الخطوة 3: إدارة وتنسيق رسائل أولياء الأمور
+    # ---------------------------------------------------------
     st.markdown("""
     <div class="step-box">
         <div class="step-header">📱 الخطوة الثالثة: معاينة وتنسيق رسائل أولياء الأمور وحالة الإرسال</div>
@@ -1013,7 +1170,7 @@ elif page == "🏫 إدارة المدرسة وتقارير أولياء الأ�
             col_b1, col_b2 = st.columns(2)
             with col_b1:
                 with st.expander(f"💬 إرسال واتساب جماعي مباشر ({len(cat_list)} طالب)"):
-                    if st.button(f"⚡ إرسال واتساب لـ {cat_name}", key=f"bulk_wa_{cat_name}_btn"):
+                    if st.button(f"⚡ إرسال واتساب لـ {cat_name}", key=f"bulk_wa_{cat_name}"):
                         with st.spinner("جاري الإرسال عبر WhatsApp API..."):
                             succ, fail, _ = send_bulk_messages(
                                 cat_list, channel="wa_api", wa_creds={"instance_id": wa_instance, "api_token": wa_token}
@@ -1022,7 +1179,7 @@ elif page == "🏫 إدارة المدرسة وتقارير أولياء الأ�
             
             with col_b2:
                 with st.expander(f"🚀 إرسال SMS جماعي عبر Mora ({len(cat_list)} طالب)"):
-                    if st.button(f"⚡ إرسال SMS لـ {cat_name}", key=f"bulk_sms_{cat_name}_btn"):
+                    if st.button(f"⚡ إرسال SMS لـ {cat_name}", key=f"bulk_sms_{cat_name}"):
                         with st.spinner("جاري الإرسال عبر Mora SMS..."):
                             m_creds = {"username": mora_user, "password": mora_pass, "sender": mora_sender, "otp": mora_otp}
                             succ, fail, _ = send_bulk_messages(cat_list, channel="sms", mora_creds=m_creds)
@@ -1030,6 +1187,7 @@ elif page == "🏫 إدارة المدرسة وتقارير أولياء الأ�
 
             st.markdown("---")
 
+            # عرض كل طالب مع تنسيق احترافي للرسالة
             for item in cat_list:
                 with st.expander(f"👤 {item['name']} ── {item['grade']} (فصل {item['class']}) ── 📱 {item['phone']}"):
                     c_info1, c_info2 = st.columns(2)
@@ -1038,6 +1196,7 @@ elif page == "🏫 إدارة المدرسة وتقارير أولياء الأ�
                     with c_info2:
                         st.write(f"**النسبة المئوية:** `{item['score']}%`" if item['is_absent'] == 0 else "**الحالة:** غائب ⚪")
                     
+                    # معاينة منسقة للرسالة بأسلوب البطاقات الرسمية
                     st.markdown(f"""
                     <div class="msg-preview-card">
                         <div style="font-weight: bold; color: #006C35; margin-bottom: 6px;">✉️ نص الرسالة الموجهة لولي الأمر:</div>
@@ -1045,116 +1204,7 @@ elif page == "🏫 إدارة المدرسة وتقارير أولياء الأ�
                     </div>
                     """, unsafe_allow_html=True)
 
-                    c_act1, c_act2 = st.columns(2)
-                    with c_act1:
-                        wa_web_link = create_whatsapp_web_url(item['phone'], item['message'])
-                        st.markdown(f'<a href="{wa_web_link}" target="_blank" style="display:inline-block; width:100%; text-align:center; background-color:#25D366; color:white; padding:8px; border-radius:6px; font-weight:bold; text-decoration:none;">🟢 فتح الواتساب المباشر</a>', unsafe_allow_html=True)
-                    with c_act2:
-                        if st.button(f"📱 إرسال SMS فردي لـ {item['name']}", key=f"ind_sms_{item['id']}"):
-                            m_creds = {"username": mora_user, "password": mora_pass, "sender": mora_sender, "otp": mora_otp}
-                            st_ok, st_msg = send_mora_sms(item['phone'], item['message'], mora_user, mora_pass, mora_sender, mora_otp)
-                            if st_ok:
-                                st.success("✅ تم إرسال الرسالة بنجاح!")
-                            else:
-                                st.error(f"❌ {st_msg}")
-
     with tab1: show_category_tab_formatted(cat_red, "فئة أقل من 50%")
     with tab2: show_category_tab_formatted(cat_blue, "فئة 50% - 75%")
     with tab3: show_category_tab_formatted(cat_green, "فئة 76% - 100%")
     with tab4: show_category_tab_formatted(cat_gray, "فئة الغياب")
-
-##### =========================================================
-##### الصفحة الثالثة: إدارة الطلاب (إضافة • حذف • نقل)
-##### =========================================================
-elif page == "👥 إدارة الطلاب (إضافة • حذف • نقل)":
-    render_saudi_header("إدارة بيانات الطلاب والتوزيع الدراسي")
-
-    tab_add, tab_del, tab_move = st.tabs([
-        "➕ إضافة طالب جديد",
-        "🗑️ حذف طالب من القائمة",
-        "🔄 نقل طالب بين الفصول"
-    ])
-
-    with tab_add:
-        st.markdown("### ➕ إضافة طالب جديد لمدرسة الثغر النموذجية")
-        col_a1, col_a2 = st.columns(2)
-        with col_a1:
-            add_grade = st.selectbox("المرحلة الدراسية:", list(current_students_db.keys()), key="add_st_grade_sel")
-            add_class = st.selectbox("الفصل / الشعبة:", list(current_students_db[add_grade].keys()), key="add_st_class_sel")
-            add_name = st.text_input("اسم الطالب الرباعي الكامل:", value="", key="add_st_name_input")
-        with col_a2:
-            add_id = st.text_input("رقم الهوية الوطنية / الإقامة:", value="", key="add_st_id_input")
-            add_phone = st.text_input("رقم جوال ولي الأمر (مثال: 96650xxxxxxx):", value="", key="add_st_phone_input")
-
-        if st.button("✨ إضافة الطالب واعتماذه فوراً", type="primary", use_container_width=True, key="btn_confirm_add_student"):
-            if not add_name or not add_id:
-                st.error("⚠️ يرجى تعبئة اسم الطالب ورقم الهوية الوطنية على الأقل.")
-            else:
-                new_st_obj = {
-                    "id": str(add_id).strip(),
-                    "name": str(add_name).strip(),
-                    "grade": add_grade,
-                    "class": int(add_class),
-                    "phone": str(add_phone).strip() if add_phone else "966500000000"
-                }
-                current_students_db[add_grade][int(add_class)].append(new_st_obj)
-                add_student_to_supabase(add_id, add_name, add_grade, add_class, add_phone)
-                st.success(f"🎉 تم إضافة الطالب **({add_name})** بنجاح إلى **{add_grade} (فصل {add_class})**!")
-
-    with tab_del:
-        st.markdown("### 🗑️ حذف طالب من القوائم الرسمية")
-        col_d1, col_d2 = st.columns(2)
-        with col_d1:
-            del_grade = st.selectbox("المرحلة الدراسية:", list(current_students_db.keys()), key="del_st_grade_sel")
-            del_class = st.selectbox("الفصل / الشعبة:", list(current_students_db[del_grade].keys()), key="del_st_class_sel")
-        
-        target_students = current_students_db[del_grade][del_class]
-        st_options = {f"{s['name']} (هوية: {s['id']})": s for s in target_students}
-
-        with col_d2:
-            if st_options:
-                selected_st_label = st.selectbox("اختر الطالب المراد حذفه:", list(st_options.keys()), key="del_st_select_box")
-                target_st = st_options[selected_st_label]
-            else:
-                st.warning("لا يوجد طلاب مسجلون في هذا الفصل.")
-                target_st = None
-
-        if target_st and st.button("❌ تأكيد حذف الطالب نهائياً", use_container_width=True, key="btn_confirm_del_student"):
-            current_students_db[del_grade][del_class] = [
-                s for s in current_students_db[del_grade][del_class] if str(s["id"]) != str(target_st["id"])
-            ]
-            delete_student_from_supabase(target_st["id"])
-            st.success(f"✅ تم حذف الطالب **({target_st['name']})** بنجاح.")
-
-    with tab_move:
-        st.markdown("### 🔄 نقل طالب من فصل إلى فصل آخر")
-        col_m1, col_m2 = st.columns(2)
-        with col_m1:
-            st.markdown("##### 📍 الفصل الحالي:")
-            from_grade = st.selectbox("من المرحلة:", list(current_students_db.keys()), key="move_from_grade_sel")
-            from_class = st.selectbox("من الفصل:", list(current_students_db[from_grade].keys()), key="move_from_class_sel")
-            
-            source_students = current_students_db[from_grade][from_class]
-            src_options = {f"{s['name']} (هوية: {s['id']})": s for s in source_students}
-            if src_options:
-                move_st_label = st.selectbox("اختر الطالب المراد نقله:", list(src_options.keys()), key="move_st_select_box")
-                st_to_move = src_options[move_st_label]
-            else:
-                st.info("لا يوجد طلاب ينتمون لهذا الفصل.")
-                st_to_move = None
-
-        with col_m2:
-            st.markdown("##### 🎯 الفصل المستهدف:")
-            to_grade = st.selectbox("إلى المرحلة:", list(current_students_db.keys()), key="move_to_grade_sel")
-            to_class = st.selectbox("إلى الفصل:", list(current_students_db[to_grade].keys()), key="move_to_class_sel")
-
-        if st_to_move and st.button("🚚 تأكيد نقل الطالب", type="primary", use_container_width=True, key="btn_confirm_move_student"):
-            current_students_db[from_grade][from_class] = [
-                s for s in current_students_db[from_grade][from_class] if str(s["id"]) != str(st_to_move["id"])
-            ]
-            moved_obj = copy.deepcopy(st_to_move)
-            moved_obj["grade"] = to_grade
-            moved_obj["class"] = int(to_class)
-            current_students_db[to_grade][int(to_class)].append(moved_obj)
-            add_student_to_supabase(moved_obj["id"], moved_obj["name"], to_grade, to_class, moved_obj.get("phone", ""))
-            st.success(f"🎉 تم نقل الطالب **({st_to_move['name']})** بنجاح إلى **{to_grade} (فصل {to_class})**!")
