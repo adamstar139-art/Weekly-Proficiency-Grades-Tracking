@@ -5,8 +5,12 @@ import io
 import copy
 import urllib.parse
 import requests
-import plotly.express as px
-import plotly.graph_objects as go
+try:
+    import plotly.express as px
+    import plotly.graph_objects as go
+    _PLOTLY_AVAILABLE = True
+except ImportError:
+    _PLOTLY_AVAILABLE = False
 
 # =========================================================
 # 0. ربط قاعدة البيانات السحابية الدائمة (Supabase Cloud)
@@ -362,7 +366,7 @@ INITIAL_STUDENTS_DB = {
     },
     "الثالث المتوسط": {
         1: [
-            {"id": "1158966166", "name": "أصيل ناصر بن محمد مذكور", "grade": "الثالث المتوسط", "class": 1, "phone": "966552149044"},
+            {"id": "1158966166", "name": "أاصيل ناصر بن محمد مذكور", "grade": "الثالث المتوسط", "class": 1, "phone": "966552149044"},
             {"id": "1162308223", "name": "خالد محمد مسدف معافا", "grade": "الثالث المتوسط", "class": 1, "phone": "966552680201"},
             {"id": "1161109093", "name": "راكان بن عبدالله بن سالم اليافعي", "grade": "الثالث المتوسط", "class": 1, "phone": "966504234219"},
             {"id": "1160805899", "name": "زياد احمد بن علي اللحيد", "grade": "الثالث المتوسط", "class": 1, "phone": "966504432362"},
@@ -382,7 +386,7 @@ INITIAL_STUDENTS_DB = {
             {"id": "1160693949", "name": "مشاري ابراهيم عبداللطيف المغري", "grade": "الثالث المتوسط", "class": 1, "phone": "966542744245"},
             {"id": "1160803878", "name": "مشاري علي موسى عقيلي", "grade": "الثالث المتوسط", "class": 1, "phone": "966502259722"},
             {"id": "1161661846", "name": "مهند عبدالله فهد الزكري", "grade": "الثالث المتوسط", "class": 1, "phone": "966558794720"},
-            {"id": "1159404795", "name": "نواف وليد حمد الشعلان", "grade": "الثالث المتوسط", "class": 1, "phone": "966555798074"},
+            {"id": "1159404795", "name": "نواف وليد حمد الشعالان", "grade": "الثالث المتوسط", "class": 1, "phone": "966555798074"},
             {"id": "1168385894", "name": "يوسف نايف مقعد العتيبي", "grade": "الثالث المتوسط", "class": 1, "phone": "966505290037"}
         ],
         2: [
@@ -450,9 +454,8 @@ st.set_page_config(
 
 st.markdown("""
 <style>
-    @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap');
-    
-    html, body, [class*="css"], div, span, h1, h2, h3, h4, h5, h6, p {
+    /* RTL and Cairo Font Fixes */
+    html, body, [class*="css"], div, span, h1, h2, h3, h4, h5, h6, p, label, button, input {
         font-family: 'Cairo', sans-serif !important;
         direction: rtl !important;
         text-align: right !important;
@@ -460,11 +463,39 @@ st.markdown("""
     .main {
         background-color: #f8fafc;
     }
-    .stButton>button {
-        border-radius: 8px;
-        font-weight: 700;
-        font-family: 'Cairo', sans-serif;
+    .stMarkdown, p, div {
+        line-height: 1.8 !important;
     }
+    
+    /* Button Styling Fixes to prevent text wrapping/overlap */
+    .stButton>button {
+        border-radius: 8px !important;
+        font-weight: 700 !important;
+        font-family: 'Cairo', sans-serif !important;
+        padding: 8px 12px !important;
+        line-height: 1.5 !important;
+        width: 100% !important;
+        white-space: nowrap !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.05) !important;
+    }
+    .stButton>button:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1) !important;
+    }
+
+    /* Expander Title Styling */
+    .streamlit-expanderHeader {
+        font-size: 15px !important;
+        font-weight: 700 !important;
+        color: #1e293b !important;
+        background-color: #f8fafc !important;
+        border-radius: 8px !important;
+        padding: 10px 15px !important;
+        border: 1px solid #e2e8f0 !important;
+    }
+
     .status-badge-ok {
         background-color: #dcfce7;
         color: #15803d;
@@ -487,20 +518,77 @@ st.markdown("""
         background: white;
         border: 1px solid #e2e8f0;
         border-radius: 12px;
-        padding: 20px;
-        margin-bottom: 20px;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+        padding: 22px;
+        margin-bottom: 22px;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.03);
     }
     .report-title {
-        color: #1e293b;
+        color: #005A2B;
         font-weight: 800;
         font-size: 20px;
         margin-bottom: 15px;
-        border-bottom: 2px solid #3b82f6;
+        border-bottom: 2px solid #005A2B;
         padding-bottom: 8px;
     }
 </style>
 """, unsafe_allow_html=True)
+
+
+# =========================================================
+# 0.1 مكونات الترويسة والتوقيعات بالهوية السعودية
+# =========================================================
+def render_saudi_header():
+    st.markdown('''
+    <div style="
+        background: linear-gradient(135deg, #005A2B 0%, #007A3D 50%, #004D25 100%);
+        color: #ffffff;
+        padding: 20px 25px;
+        border-radius: 14px;
+        box-shadow: 0 6px 20px rgba(0, 90, 43, 0.22);
+        margin-bottom: 25px;
+        border-top: 5px solid #D4AF37;
+        border-bottom: 3px solid #D4AF37;
+        font-family: 'Cairo', sans-serif;
+    ">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; direction: rtl; text-align: right;">
+            <div style="display: flex; align-items: center; gap: 15px;">
+                <div style="font-size: 38px; line-height: 1;">🇸🇦</div>
+                <div>
+                    <div style="font-size: 13px; opacity: 0.95; font-weight: 600; letter-spacing: 0.3px; color: #E2E8F0;">المملكة العربية السعودية • وزارة التعليم</div>
+                    <div style="font-size: 13px; opacity: 0.9; margin-top: 2px; color: #CBD5E1;">إدارة التعليم بمنطقة الرياض | مكتب التعليم الخاص</div>
+                    <div style="font-size: 22px; font-weight: 800; margin-top: 4px; color: #FFFFFF; text-shadow: 0 2px 4px rgba(0,0,0,0.3);">متوسطة الثغر النموذجية الأهلية</div>
+                </div>
+            </div>
+            <div style="background: rgba(255, 255, 255, 0.15); backdrop-filter: blur(5px); border: 1px solid rgba(255, 255, 255, 0.3); padding: 8px 18px; border-radius: 30px; font-size: 13px; font-weight: 700; color: #F8FAFC; white-space: nowrap;">
+                👨‍💻 تصميم وتطوير: أ/ محمد سامي السعيد
+            </div>
+        </div>
+    </div>
+    ''', unsafe_allow_html=True)
+
+def render_signatures_card():
+    st.markdown('''
+    <div style="background: white; border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px; margin-top: 20px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.04);">
+        <div style="font-size: 16px; font-weight: 800; color: #005A2B; margin-bottom: 15px; border-bottom: 2px solid #005A2B; padding-bottom: 6px;">
+            ✍️ الاعتماد والتوقيعات الرسمية للقيادة المدرسية
+        </div>
+        <div style="display: flex; justify-content: space-around; flex-wrap: wrap; gap: 15px; text-align: center;">
+            <div style="background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 10px; padding: 12px 18px; min-width: 200px; flex: 1;">
+                <div style="color: #64748b; font-size: 13px; font-weight: 700;">وكيل شؤون الطلاب</div>
+                <div style="color: #0f172a; font-size: 15px; font-weight: 800; margin-top: 4px;">أ/ صالح بن عبدالله الدعجاني</div>
+            </div>
+            <div style="background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 10px; padding: 12px 18px; min-width: 200px; flex: 1;">
+                <div style="color: #64748b; font-size: 13px; font-weight: 700;">وكيل الشؤون التعليمية</div>
+                <div style="color: #0f172a; font-size: 15px; font-weight: 800; margin-top: 4px;">أ/ محمد مبروك السيد</div>
+            </div>
+            <div style="background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 10px; padding: 12px 18px; min-width: 200px; flex: 1;">
+                <div style="color: #64748b; font-size: 13px; font-weight: 700;">مدير المدرسة</div>
+                <div style="color: #0f172a; font-size: 15px; font-weight: 800; margin-top: 4px;">أ/ إبراهيم بن موسى التميمي</div>
+            </div>
+        </div>
+    </div>
+    ''', unsafe_allow_html=True)
+
 
 # الشريط الجانبي
 st.sidebar.title("📌 القائمة الرئيسية")
@@ -525,6 +613,8 @@ with st.sidebar.expander("📱 إعدادات Mora SMS"):
     mora_otp = st.text_input("كود التحقق / OTP (إذا طلب):", value="", key="mora_otp_input")
 
 st.sidebar.markdown("---")
+render_saudi_header()
+
 page = st.sidebar.radio("اختر الصفحة:", [
     "📝 صفحة الرصد", 
     "🏫 إدارة المدرسة وتقارير أولياء الأمور",
@@ -727,19 +817,32 @@ elif page == "🏫 إدارة المدرسة وتقارير أولياء الأ�
                             succ, fail, details = send_bulk_messages(cat_list, channel="sms", mora_creds=m_creds)
                             st.success(f"✅ اكتملت عملية الإرسال! النجاح: {succ} | الفشل: {fail}")
 
-            st.markdown("---")
+            st.markdown("<div style='margin-bottom: 15px;'></div>", unsafe_allow_html=True)
 
-            for item in cat_list:
+            for idx_st, item in enumerate(cat_list):
                 wa_manual_url = create_whatsapp_web_url(item['phone'], item['message'])
-                with st.expander(f"👤 {item['name']} ({item['grade']} - فصل {item['class']}) | جوال ولي الأمر: {item['phone']}"):
-                    st.write(f"**رقم الهوية:** {item['id']}")
-                    st.write(f"**النسبة المئوية / الدرجة:** {item['score']}%" if item['is_absent'] == 0 else "**الحالة:** غائب ⚪")
-                    st.info(f"💬 **نص الرسالة الموجهة:**\n\n{item['message']}")
+                score_str = f"{item['score']}%" if item['is_absent'] == 0 else "غائب ⚪"
+                
+                expander_label = f"👤 {item['name']} | {item['grade']} (فصل {item['class']})"
+                with st.expander(expander_label):
+                    st.markdown(f'''
+                    <div style="background-color: #ffffff; border-radius: 10px; padding: 16px; border: 1px solid #e2e8f0; margin-bottom: 14px;">
+                        <div style="display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; font-size: 13px;">
+                            <span style="background: #f1f5f9; color: #334155; padding: 5px 12px; border-radius: 6px; font-weight: 700; border: 1px solid #cbd5e1;">🆔 الهوية: {item['id']}</span>
+                            <span style="background: #e0f2fe; color: #0369a1; padding: 5px 12px; border-radius: 6px; font-weight: 700; border: 1px solid #bae6fd;">📊 الدرجة: {score_str}</span>
+                            <span style="background: #fef3c7; color: #92400e; padding: 5px 12px; border-radius: 6px; font-weight: 700; border: 1px solid #fde68a;">📱 الجوال: {item['phone']}</span>
+                        </div>
+                        <div style="background-color: #f8fafc; border-right: 4px solid #005A2B; padding: 14px 18px; border-radius: 8px; color: #0f172a; font-size: 14px; line-height: 1.8; margin-bottom: 16px; word-wrap: break-word;">
+                            <b style="color: #005A2B;">💬 نص الرسالة الموجهة لولي الأمر:</b><br/>
+                            {item['message']}
+                        </div>
+                    </div>
+                    ''', unsafe_allow_html=True)
                     
-                    btn_col1, btn_col2, btn_col3 = st.columns(3)
+                    btn_col1, btn_col2, btn_col3 = st.columns([1, 1, 1])
                     
                     with btn_col1:
-                        if st.button(f"💬 إرسال واتساب تلقائي (مباشر)", key=f"wa_direct_{item['id']}"):
+                        if st.button("💬 إرسال واتساب تلقائي", key=f"wa_dir_{item['id']}_{idx_st}"):
                             with st.spinner("جاري الإرسال المباشر..."):
                                 ok, resp = send_whatsapp_direct_api(item['phone'], item['message'], wa_instance, wa_token)
                                 if ok:
@@ -750,14 +853,14 @@ elif page == "🏫 إدارة المدرسة وتقارير أولياء الأ�
                     with btn_col2:
                         st.markdown(f'''
                         <a href="{wa_manual_url}" target="_blank" style="text-decoration:none;">
-                            <div style="background-color:#25D366; color:white; padding:8px 12px; border-radius:6px; text-align:center; font-weight:bold; font-size:13px; margin-top:2px; display:block;">
-                                🌐 فتح في تطبيق الواتساب
+                            <div style="background-color:#25D366; color:white; padding:8px 12px; border-radius:8px; text-align:center; font-weight:700; font-size:13px; line-height:1.5; display:block; border: 1px solid #1da851;">
+                                🌐 فتح بالواتساب
                             </div>
                         </a>
                         ''', unsafe_allow_html=True)
 
                     with btn_col3:
-                        if st.button(f"📱 إرسال SMS (Mora)", key=f"single_sms_{item['id']}"):
+                        if st.button("📱 إرسال SMS (Mora)", key=f"sms_dir_{item['id']}_{idx_st}"):
                             with st.spinner("جاري الإرسال..."):
                                 status, msg_resp = send_mora_sms(
                                     item['phone'], item['message'], username=mora_user, password=mora_pass, sender_name=mora_sender, otp_code=mora_otp
@@ -875,90 +978,83 @@ elif page == "🁻 طباعة التقارير والتحليلات":
     <meta charset="UTF-8">
     <title>{title}</title>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap');
-        body {{
-            font-family: 'Cairo', sans-serif;
-            direction: rtl;
-            text-align: right;
-            padding: 30px;
-            background-color: #fff;
-            color: #1e293b;
-        }}
-        .header {{
-            text-align: center;
-            border-bottom: 3px double #0284c7;
-            padding-bottom: 15px;
-            margin-bottom: 25px;
-        }}
-        .header h1 {{
-            color: #0369a1;
-            margin: 0 0 8px 0;
-            font-size: 26px;
-        }}
-        .header h3 {{
-            color: #64748b;
-            margin: 0;
-            font-size: 16px;
-            font-weight: 600;
-        }}
-        .metrics-container {{
-            display: flex;
-            justify-content: space-around;
-            margin-bottom: 25px;
-            gap: 15px;
-        }}
-        .metric-box {{
-            background: #f0f9ff;
-            border: 1px solid #bae6fd;
-            border-radius: 8px;
-            padding: 12px 20px;
-            text-align: center;
-            flex: 1;
-        }}
-        .metric-val {{
-            font-size: 22px;
-            font-weight: 800;
-            color: #0369a1;
-        }}
-        .metric-lbl {{
-            font-size: 13px;
-            color: #475569;
-            font-weight: 600;
-        }}
-        .styled-table {{
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 15px;
-            font-size: 14px;
-        }}
-        .styled-table th {{
-            background-color: #0284c7;
-            color: white;
-            padding: 10px;
-            border: 1px solid #0284c7;
-            text-align: center;
-        }}
-        .styled-table td {{
-            padding: 8px 12px;
-            border: 1px solid #e2e8f0;
-            text-align: center;
-        }}
-        .styled-table tr:nth-child(even) {{
-            background-color: #f8fafc;
-        }}
-        .footer {{
-            margin-top: 40px;
-            text-align: center;
-            font-size: 12px;
-            color: #94a3b8;
-            border-top: 1px solid #e2e8f0;
-            padding-top: 10px;
-        }}
-        @media print {{
-            .no-print {{ display: none; }}
-            body {{ padding: 0; }}
-        }}
-    </style>
+    /* RTL and Cairo Font Fixes */
+    html, body, [class*="css"], div, span, h1, h2, h3, h4, h5, h6, p, label, button, input {
+        font-family: 'Cairo', sans-serif !important;
+        direction: rtl !important;
+        text-align: right !important;
+    }
+    .main {
+        background-color: #f8fafc;
+    }
+    .stMarkdown, p, div {
+        line-height: 1.8 !important;
+    }
+    
+    /* Button Styling Fixes to prevent text wrapping/overlap */
+    .stButton>button {
+        border-radius: 8px !important;
+        font-weight: 700 !important;
+        font-family: 'Cairo', sans-serif !important;
+        padding: 8px 12px !important;
+        line-height: 1.5 !important;
+        width: 100% !important;
+        white-space: nowrap !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.05) !important;
+    }
+    .stButton>button:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1) !important;
+    }
+
+    /* Expander Title Styling */
+    .streamlit-expanderHeader {
+        font-size: 15px !important;
+        font-weight: 700 !important;
+        color: #1e293b !important;
+        background-color: #f8fafc !important;
+        border-radius: 8px !important;
+        padding: 10px 15px !important;
+        border: 1px solid #e2e8f0 !important;
+    }
+
+    .status-badge-ok {
+        background-color: #dcfce7;
+        color: #15803d;
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-weight: bold;
+        font-size: 13px;
+        text-align: center;
+    }
+    .status-badge-off {
+        background-color: #fee2e2;
+        color: #b91c1c;
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-weight: bold;
+        font-size: 13px;
+        text-align: center;
+    }
+    .report-card {
+        background: white;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 22px;
+        margin-bottom: 22px;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.03);
+    }
+    .report-title {
+        color: #005A2B;
+        font-weight: 800;
+        font-size: 20px;
+        margin-bottom: 15px;
+        border-bottom: 2px solid #005A2B;
+        padding-bottom: 8px;
+    }
+</style>
 </head>
 <body>
     <div class="header">
@@ -968,7 +1064,23 @@ elif page == "🁻 طباعة التقارير والتحليلات":
     </div>
     {metrics_html}
     {table_html}
+    
+    <div style="display: flex; justify-content: space-between; margin-top: 40px; margin-bottom: 25px; text-align: center; gap: 15px;">
+        <div style="flex: 1; padding: 12px; border-top: 2px solid #005A2B; background: #f8fafc; border-radius: 6px;">
+            <div style="font-size: 13px; font-weight: 700; color: #005A2B;">وكيل شؤون الطلاب</div>
+            <div style="font-size: 15px; font-weight: 800; margin-top: 6px; color: #1e293b;">صالح بن عبدالله الدعجاني</div>
+        </div>
+        <div style="flex: 1; padding: 12px; border-top: 2px solid #005A2B; background: #f8fafc; border-radius: 6px;">
+            <div style="font-size: 13px; font-weight: 700; color: #005A2B;">وكيل الشؤون التعليمية</div>
+            <div style="font-size: 15px; font-weight: 800; margin-top: 6px; color: #1e293b;">محمد مبروك السيد</div>
+        </div>
+        <div style="flex: 1; padding: 12px; border-top: 2px solid #005A2B; background: #f8fafc; border-radius: 6px;">
+            <div style="font-size: 13px; font-weight: 700; color: #005A2B;">مدير المدرسة</div>
+            <div style="font-size: 15px; font-weight: 800; margin-top: 6px; color: #1e293b;">إبراهيم بن موسى التميمي</div>
+        </div>
+    </div>
     <div class="footer">
+
         تم استخراج هذا التقرير آلياً من نظام إدارة درجات مدرسة الثغر النموذجية
     </div>
 </body>
@@ -994,20 +1106,25 @@ elif page == "🁻 طباعة التقارير والتحليلات":
         st.dataframe(df_master, use_container_width=True)
 
         # رسم بياني للمدرسة
-        fig_school = px.histogram(
-            df_master, 
-            x="الحالة", 
-            title="📊 توزيع مستويات الطلاب على مستوى المدرسة",
-            color="الحالة",
-            color_discrete_map={
-                "متميز (>75%) 🟢": "#22c55e",
-                "متوسط (50-75%) 🔵": "#3b82f6",
-                "ضعيف (<50%) 🔴": "#ef4444",
-                "غائب ⚪": "#94a3b8"
-            }
-        )
-        st.plotly_chart(fig_school, use_container_width=True)
+        if _PLOTLY_AVAILABLE:
+            fig_school = px.histogram(
+                df_master, 
+                x="الحالة", 
+                title="📊 توزيع مستويات الطلاب على مستوى المدرسة",
+                color="الحالة",
+                color_discrete_map={
+                    "متميز (>75%) 🟢": "#22c55e",
+                    "متوسط (50-75%) 🔵": "#3b82f6",
+                    "ضعيف (<50%) 🔴": "#ef4444",
+                    "غائب ⚪": "#94a3b8"
+                }
+            )
+            st.plotly_chart(fig_school, use_container_width=True)
+        else:
+            st.info("📊 توزيع المستويات (عادي):")
+            st.bar_chart(df_master["الحالة"].value_counts())
 
+        render_signatures_card()
         col_ex1, col_ex2 = st.columns(2)
         with col_ex1:
             excel_data = to_excel(df_master, sheet_name="التقرير الشامل")
@@ -1045,21 +1162,26 @@ elif page == "🁻 طباعة التقارير والتحليلات":
         st.dataframe(df_grade, use_container_width=True)
 
         # رسم بياني للصف
-        fig_grade = px.pie(
-            df_grade, 
-            names="الحالة", 
-            title=f"🎯 الرسم البياني لتوزيع المستويات في {selected_grade}",
-            hole=0.4,
-            color="الحالة",
-            color_discrete_map={
-                "متميز (>75%) 🟢": "#22c55e",
-                "متوسط (50-75%) 🔵": "#3b82f6",
-                "ضعيف (<50%) 🔴": "#ef4444",
-                "غائب ⚪": "#94a3b8"
-            }
-        )
-        st.plotly_chart(fig_grade, use_container_width=True)
+        if _PLOTLY_AVAILABLE:
+            fig_grade = px.pie(
+                df_grade, 
+                names="الحالة", 
+                title=f"🎯 الرسم البياني لتوزيع المستويات في {selected_grade}",
+                hole=0.4,
+                color="الحالة",
+                color_discrete_map={
+                    "متميز (>75%) 🟢": "#22c55e",
+                    "متوسط (50-75%) 🔵": "#3b82f6",
+                    "ضعيف (<50%) 🔴": "#ef4444",
+                    "غائب ⚪": "#94a3b8"
+                }
+            )
+            st.plotly_chart(fig_grade, use_container_width=True)
+        else:
+            st.info(f"📊 توزيع المستويات في {selected_grade}:")
+            st.bar_chart(df_grade["الحالة"].value_counts())
 
+        render_signatures_card()
         col_gx1, col_gx2 = st.columns(2)
         with col_gx1:
             st.download_button("📥 تصدير تقرير الصف إلى Excel", data=to_excel(df_grade, sheet_name=selected_grade), file_name=f"Report_{selected_grade}_{rep_week}.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", use_container_width=True)
@@ -1098,21 +1220,26 @@ elif page == "🁻 طباعة التقارير والتحليلات":
 
         st.dataframe(df_class, use_container_width=True)
 
-        fig_cls = px.bar(
-            df_class, 
-            x="اسم الطالب", 
-            y="الدرجة", 
-            color="الحالة",
-            title=f"📊 درجات طلاب {cls_grade} - فصل ({cls_num})",
-            color_discrete_map={
-                "متميز (>75%) 🟢": "#22c55e",
-                "متوسط (50-75%) 🔵": "#3b82f6",
-                "ضعيف (<50%) 🔴": "#ef4444",
-                "غائب ⚪": "#94a3b8"
-            }
-        )
-        st.plotly_chart(fig_cls, use_container_width=True)
+        if _PLOTLY_AVAILABLE:
+            fig_cls = px.bar(
+                df_class, 
+                x="اسم الطالب", 
+                y="الدرجة", 
+                color="الحالة",
+                title=f"📊 درجات طلاب {cls_grade} - فصل ({cls_num})",
+                color_discrete_map={
+                    "متميز (>75%) 🟢": "#22c55e",
+                    "متوسط (50-75%) 🔵": "#3b82f6",
+                    "ضعيف (<50%) 🔴": "#ef4444",
+                    "غائب ⚪": "#94a3b8"
+                }
+            )
+            st.plotly_chart(fig_cls, use_container_width=True)
+        else:
+            st.info(f"📊 درجات طلاب {cls_grade} - فصل ({cls_num}):")
+            st.bar_chart(df_class.set_index("اسم الطالب")["الدرجة"])
 
+        render_signatures_card()
         col_cx1, col_cx2 = st.columns(2)
         with col_cx1:
             st.download_button(f"📥 تصدير تقرير فصل ({cls_num}) إلى Excel", data=to_excel(df_class, sheet_name=f"فصل_{cls_num}"), file_name=f"Report_{cls_grade}_Class{cls_num}.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", use_container_width=True)
@@ -1171,22 +1298,28 @@ elif page == "🁻 طباعة التقارير والتحليلات":
 
         df_chart = pd.DataFrame(chart_data)
         if not df_chart.empty:
-            fig_outcomes = px.bar(
-                df_chart, 
-                x="الصف", 
-                y="العدد", 
-                color="الفئة", 
-                barmode="group",
-                title="📊 مقارنة توزيع الفئات التحصيلية بين المرحلة المتوسطة",
-                color_discrete_map={
-                    "متميزون (>75%)": "#22c55e",
-                    "متوسطون (50-75%)": "#3b82f6",
-                    "ضعاف (<50%)": "#ef4444",
-                    "غائبون": "#94a3b8"
-                }
-            )
-            st.plotly_chart(fig_outcomes, use_container_width=True)
+            if _PLOTLY_AVAILABLE:
+                fig_outcomes = px.bar(
+                    df_chart, 
+                    x="الصف", 
+                    y="العدد", 
+                    color="الفئة", 
+                    barmode="group",
+                    title="📊 مقارنة توزيع الفئات التحصيلية بين المرحلة المتوسطة",
+                    color_discrete_map={
+                        "متميزون (>75%)": "#22c55e",
+                        "متوسطون (50-75%)": "#3b82f6",
+                        "ضعاف (<50%)": "#ef4444",
+                        "غائبون": "#94a3b8"
+                    }
+                )
+                st.plotly_chart(fig_outcomes, use_container_width=True)
+            else:
+                st.info("📊 مقارنة الفئات التحصيلية بين الصفوف:")
+                pivot_df = df_chart.pivot(index="الصف", columns="الفئة", values="العدد").fillna(0)
+                st.bar_chart(pivot_df)
 
+        render_signatures_card()
         col_ox1, col_ox2 = st.columns(2)
         with col_ox1:
             st.download_button("📥 تصدير تقرير تحليل النواتج إلى Excel", data=to_excel(df_outcomes, sheet_name="تحليل النواتج"), file_name=f"Outcomes_Analysis_{rep_week}.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", use_container_width=True)
