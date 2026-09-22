@@ -978,83 +978,90 @@ elif page == "🁻 طباعة التقارير والتحليلات":
     <meta charset="UTF-8">
     <title>{title}</title>
     <style>
-    /* RTL and Cairo Font Fixes */
-    html, body, [class*="css"], div, span, h1, h2, h3, h4, h5, h6, p, label, button, input {
-        font-family: 'Cairo', sans-serif !important;
-        direction: rtl !important;
-        text-align: right !important;
-    }
-    .main {
-        background-color: #f8fafc;
-    }
-    .stMarkdown, p, div {
-        line-height: 1.8 !important;
-    }
-    
-    /* Button Styling Fixes to prevent text wrapping/overlap */
-    .stButton>button {
-        border-radius: 8px !important;
-        font-weight: 700 !important;
-        font-family: 'Cairo', sans-serif !important;
-        padding: 8px 12px !important;
-        line-height: 1.5 !important;
-        width: 100% !important;
-        white-space: nowrap !important;
-        overflow: hidden !important;
-        text-overflow: ellipsis !important;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.05) !important;
-    }
-    .stButton>button:hover {
-        transform: translateY(-1px);
-        box-shadow: 0 4px 6px rgba(0,0,0,0.1) !important;
-    }
-
-    /* Expander Title Styling */
-    .streamlit-expanderHeader {
-        font-size: 15px !important;
-        font-weight: 700 !important;
-        color: #1e293b !important;
-        background-color: #f8fafc !important;
-        border-radius: 8px !important;
-        padding: 10px 15px !important;
-        border: 1px solid #e2e8f0 !important;
-    }
-
-    .status-badge-ok {
-        background-color: #dcfce7;
-        color: #15803d;
-        padding: 6px 12px;
-        border-radius: 20px;
-        font-weight: bold;
-        font-size: 13px;
-        text-align: center;
-    }
-    .status-badge-off {
-        background-color: #fee2e2;
-        color: #b91c1c;
-        padding: 6px 12px;
-        border-radius: 20px;
-        font-weight: bold;
-        font-size: 13px;
-        text-align: center;
-    }
-    .report-card {
-        background: white;
-        border: 1px solid #e2e8f0;
-        border-radius: 12px;
-        padding: 22px;
-        margin-bottom: 22px;
-        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.03);
-    }
-    .report-title {
-        color: #005A2B;
-        font-weight: 800;
-        font-size: 20px;
-        margin-bottom: 15px;
-        border-bottom: 2px solid #005A2B;
-        padding-bottom: 8px;
-    }
-</style>
+        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap');
+        body {{
+            font-family: 'Cairo', sans-serif;
+            direction: rtl;
+            text-align: right;
+            padding: 30px;
+            background-color: #fff;
+            color: #1e293b;
+        }}
+        .header {{
+            text-align: center;
+            border-bottom: 3px double #005A2B;
+            padding-bottom: 15px;
+            margin-bottom: 25px;
+        }}
+        .header h1 {{
+            color: #005A2B;
+            margin: 0 0 8px 0;
+            font-size: 26px;
+        }}
+        .header h3 {{
+            color: #64748b;
+            margin: 0;
+            font-size: 16px;
+            font-weight: 600;
+        }}
+        .metrics-container {{
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 25px;
+            gap: 15px;
+        }}
+        .metric-box {{
+            background: #f0fdf4;
+            border: 1px solid #bbf7d0;
+            border-radius: 8px;
+            padding: 12px 20px;
+            text-align: center;
+            flex: 1;
+        }}
+        .metric-val {{
+            font-size: 22px;
+            font-weight: 800;
+            color: #005A2B;
+        }}
+        .metric-lbl {{
+            font-size: 13px;
+            color: #475569;
+            font-weight: 600;
+        }}
+        .styled-table {{
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+            font-size: 14px;
+        }}
+        .styled-table th {{
+            background-color: #005A2B;
+            color: white;
+            padding: 10px;
+            border: 1px solid #005A2B;
+            text-align: center;
+        }}
+        .styled-table td {{
+            padding: 8px 12px;
+            border: 1px solid #e2e8f0;
+            text-align: center;
+        }}
+        .styled-table tr:nth-child(even) {{
+            background-color: #f8fafc;
+        }}
+        .footer {{
+            margin-top: 40px;
+            text-align: center;
+            font-size: 12px;
+            color: #94a3b8;
+            border-top: 1px solid #e2e8f0;
+            padding-top: 10px;
+        }}
+        @media print {{
+            .no-print {{ display: none; }}
+            body {{ padding: 0; }}
+        }}
+    </style>
 </head>
 <body>
     <div class="header">
@@ -1079,8 +1086,8 @@ elif page == "🁻 طباعة التقارير والتحليلات":
             <div style="font-size: 15px; font-weight: 800; margin-top: 6px; color: #1e293b;">إبراهيم بن موسى التميمي</div>
         </div>
     </div>
+    
     <div class="footer">
-
         تم استخراج هذا التقرير آلياً من نظام إدارة درجات مدرسة الثغر النموذجية
     </div>
 </body>
