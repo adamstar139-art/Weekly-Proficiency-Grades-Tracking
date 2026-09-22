@@ -946,7 +946,7 @@ elif page == "🁻 طباعة التقارير والتحليلات":
     # جلب درجات الأسبوع المختار
     db_grades_list = fetch_all_grades_db(rep_term, rep_week)
     db_grades_map = {str(g['student_id']): g for g in db_grades_list}
-    phone_db_map = fetch_student_phones_db()
+   
 
     # تجميع كلي للبيانات
     master_records = []
@@ -957,7 +957,7 @@ elif page == "🁻 طباعة التقارير والتحليلات":
                 rec = db_grades_map.get(sid, {})
                 sc = rec.get("score", None)
                 is_abs = rec.get("is_absent", 0)
-                phone = phone_db_map.get(sid, s_item.get("phone", ""))
+               
                 
                 status_cat = "غير مرصود"
                 if is_abs == 1:
@@ -978,7 +978,7 @@ elif page == "🁻 طباعة التقارير والتحليلات":
                     "الدرجة": sc if (sc is not None and is_abs == 0) else 0.0,
                     "الحالة": status_cat,
                     "غائب": "نعم" if is_abs == 1 else "لا",
-                    "رقم الجوال": phone
+                  
                 })
                 
     df_master = pd.DataFrame(master_records)
