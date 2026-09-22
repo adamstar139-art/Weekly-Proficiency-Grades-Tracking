@@ -5,10 +5,11 @@ import io
 import copy
 import urllib.parse
 import requests
+import streamlit.components.v1 as components
 
-# =========================================================
-# 0. ربط قاعدة البيانات السحابية الدائمة (Supabase Cloud)
-# =========================================================
+### =========================================================
+### 0. ربط قاعدة البيانات السحابية الدائمة (Supabase Cloud)
+### =========================================================
 try:
     from supabase import create_client, Client
     _SUPABASE_LIB = True
@@ -29,25 +30,17 @@ def get_supabase():
     if not url and hasattr(st.secrets, "get"):
         url = st.secrets.get("url") or st.secrets.get("SUPABASE_URL")
     if not key and hasattr(st.secrets, "get"):
-        key = st.secrets.get("key") or st.secrets.get("SUPABASE_KEY") or st.secrets.get("anon_key")
-
-    if not url or not key:
-        return None
-    try:
-        clean_url = str(url).strip().strip('"').strip("'")
-        clean_key = str(key).strip().strip('"').strip("'")
-        if not clean_url or not clean_key:
+        key = st.secrets.get("key") or sec.get("SUPABASE_KEY") or st.secrets.get("anon_key")
+    if url and key:
+        try:
+            return create_client(url, key)
+        except Exception:
             return None
-        return create_client(clean_url, clean_key)
-    except Exception:
-        return None
+    return None
 
 def supabase_ready():
     return get_supabase() is not None
 
-# =========================================================
-# 1. دوال قاعدة البيانات (Supabase Integration)
-# =========================================================
 @st.cache_data(ttl=15, show_spinner=False)
 def fetch_all_grades_db(term, week):
     sb = get_supabase()
@@ -100,25 +93,34 @@ def fetch_student_phones_db():
     except Exception:
         return {}
 
-def update_student_phone_db(student_id, new_phone):
-    sb = get_supabase()
-    if sb is None:
-        return False
-    try:
-        sb.table("thaghr_students_info").upsert({
-            "student_id": str(student_id),
-            "phone": str(new_phone).strip()
-        }).execute()
-        return True
-    except Exception as ex:
-        st.error(f"خطأ في تحديث رقم الجوال: {ex}")
-        return False
-    finally:
-        st.cache_data.clear()
+### =========================================================
+### 1. دالة زر/أيقونة الطباعة المباشرة (Print Button Component)
+### =========================================================
+def print_button(label="🖨️ طباعة التقرير", button_id="print_btn"):
+    """مكون جافاسكريبت لإضافة زر طباعة مباشر عبر المتصفح"""
+    js_code = f"""
+        <button onclick="window.print()" style="
+            background-color: #1f77b4;
+            color: white;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 15px;
+            font-family: 'Cairo', sans-serif;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        ">
+            {label}
+        </button>
+    """
+    components.html(js_code, height=45)
 
-# =========================================================
-# 2. دوال إرسال الرسائل (Mora SMS + WhatsApp Gateway API)
-# =========================================================
+### =========================================================
+### 2. خدمات WhatsApp Direct API و Mora SMS
+### =========================================================
 def send_whatsapp_direct_api(phone, message, instance_id="", api_token=""):
     if not api_token or not instance_id:
         return False, "يرجى إدخال Instance ID و API Token الخاص بخدمة WhatsApp Gateway في القائمة الجانبية."
@@ -145,30 +147,44 @@ def send_whatsapp_direct_api(phone, message, instance_id="", api_token=""):
     except Exception as e:
         return False, f"فشل الاتصال بـ API: {e}"
 
-def send_mora_sms(phone, message, username, password, sender_name, otp_code=""):
+def create_whatsapp_web_url(phone, message):
     phone_clean = str(phone).strip().replace("+", "").replace(" ", "").replace("-", "")
     if phone_clean.startswith("05"):
         phone_clean = "966" + phone_clean[1:]
     elif phone_clean.startswith("5"):
         phone_clean = "966" + phone_clean
+    msg_encoded = urllib.parse.quote(message)
+    return f"https://api.whatsapp.com/send?phone={phone_clean}&text={msg_encoded}"
 
-    url = "https://mora-sa.com/api/v1/sendsms"
-    payload = {
+def send_mora_sms(phone, message, username="966508634881", password="", sender="THAGHR-S", otp=""):
+    if not username or not password:
+        return False, "يرجى التأكد من إعدادات حساب Mora SMS."
+    phone_clean = str(phone).strip().replace("+", "").replace(" ", "").replace("-", "")
+    if phone_clean.startswith("05"):
+        phone_clean = "966" + phone_clean[1:]
+    elif phone_clean.startswith("5"):
+        phone_clean = "966" + phone_clean
+        
+    url = "https://www.mora-sms.com/api/sendsms.php"
+    params = {
         "username": username,
         "password": password,
-        "sender": sender_name,
+        "sender": sender,
         "numbers": phone_clean,
         "message": message,
-        "otp": otp_code
+        "unicode": "E",
+        "return": "json"
     }
+    if otp:
+        params["otp"] = otp
     try:
-        res = requests.post(url, data=payload, timeout=10)
-        if res.status_code == 200:
-            return True, "تم إرسال SMS بنجاح عبر Mora!"
+        resp = requests.get(url, params=params, timeout=10)
+        if resp.status_code == 200:
+            return True, "تم إرسال الرسالة النصية بنجاح عبر Mora SMS."
         else:
-            return False, f"خطأ Mora: {res.text}"
-    except Exception as ex:
-        return False, f"تعذر الإرسال: {ex}"
+            return False, f"خطأ في الإرسال: {resp.text}"
+    except Exception as e:
+        return False, f"فشل الاتصال بـ Mora SMS: {e}"
 
 def send_bulk_messages(students_list, channel="sms", mora_creds={}, wa_creds={}):
     succ, fail = 0, 0
@@ -180,52 +196,50 @@ def send_bulk_messages(students_list, channel="sms", mora_creds={}, wa_creds={})
             status, resp = send_whatsapp_direct_api(phone, msg, wa_creds.get("instance_id", ""), wa_creds.get("api_token", ""))
         else:
             status, resp = send_mora_sms(phone, msg, mora_creds.get("username", ""), mora_creds.get("password", ""), mora_creds.get("sender", ""), mora_creds.get("otp", ""))
-        
         if status:
             succ += 1
         else:
             fail += 1
-        details.append((st_item['name'], phone, status, resp))
+        details.append({"name": st_item['name'], "status": status, "response": resp})
     return succ, fail, details
 
-def create_whatsapp_web_url(phone, text):
-    phone_clean = str(phone).strip().replace("+", "").replace(" ", "").replace("-", "")
-    if phone_clean.startswith("05"):
-        phone_clean = "966" + phone_clean[1:]
-    elif phone_clean.startswith("5"):
-        phone_clean = "966" + phone_clean
-    encoded_text = urllib.parse.quote(text)
-    return f"https://api.whatsapp.com/send?phone={phone_clean}&text={encoded_text}"
-
-def generate_parent_message(student_name, score, is_absent):
+def generate_parent_message(student_name, score, is_absent=False):
     if is_absent:
         return (
-            f"المكرم ولي أمر الطالب/ {student_name}، نود التنبيه على غياب الطالب هذا اليوم، "
-            f"ونحثكم على متابعة الانتظام وحضور الاختبارات لتجنب حسم الدرجات والتأثير على مستواه التحصيلي: متوسطة الثغر النموذجية الأهلية."
+            f"المحترم ولي أمر الطالب/ {student_name}\n"
+            f"السلام عليكم ورحمة الله وبركاته،،\n"
+            f"نحيطكم علماً بأن ابنكم كان غائباً عن اختبار التقييم الأسبوعي لهذا الأسبوع في مدرسة الثغر النموذجية الأهلية.\n"
+            f"نرجو التواصل مع إدارة المدرسة لمتابعة حالة الطالب.\n"
+            f"شاكرين حسن تعاونكم."
         )
-    sc_str = f"{score}%" if score is not None else "أقل من 50%"
-    if score is None or score < 50:
+    elif score is None or score < 50:
         return (
-            f"المكرم ولي أمر الطالب/ {student_name}، نفيدكم بأن نسبة إتقان الطالب هذا الأسبوع هي ({sc_str}). "
-            f"حرصاً منا على مصلحة ابنكم ومستقبله الدراسي، نود إشعاركم بوجود تراجع ملحوظ في مستواه التحصيلي مؤخراً، "
-            f"ونرجو منكم تكثيف المتابعة المنزلية والتواصل معنا للوقوف على أسباب هذا التراجع ووضع خطة لتحسين أدائه. مع تحياتنا متوسطة الثغر النموذجية الأهلية."
+            f"المحترم ولي أمر الطالب/ {student_name}\n"
+            f"السلام عليكم ورحمة الله وبركاته،،\n"
+            f"نود إشعاركم بأن مستوى الطالب في تقييم هذا الأسبوع بحاجة إلى متابعة واهتمام، حيث حصل على نسبة ({score}%).\n"
+            f"نأمل حث الطالب على الاستذكار والمراجعة لرفع مستواه.\n"
+            f"شاكرين اهتمامكم الدائم."
         )
     elif score <= 75:
         return (
-            f"المكرم ولي أمر الطالب/ {student_name}، نفيدكم بأن نسبة إتقان الطالب هذا الأسبوع هي ({sc_str}). "
-            f"نود إحاطتكم علماً بأن المستوى التحصيلي لابنكم جيد ومستقر بشكل عام، ولكنه يمتلك قدرات أعلى تؤهله لتحقيق درجات أفضل. "
-            f"نأمل منكم التركيز معه في الفترة القادمة لرفع كفاءته الدراسية. شاكرين لكم تعاونكم الدائم. مع تحياتنا متوسطة الثغر النموذجية الأهلية."
+            f"المحترم ولي أمر الطالب/ {student_name}\n"
+            f"السلام عليكم ورحمة الله وبركاته،،\n"
+            f"نحيطكم علماً بأن ابنكم حقق مستوى جيداً في التقييم الأسبوعي بنسبة ({score}%).\n"
+            f"نتطلع إلى مزيد من الجهد للوصول إلى مستوى الإتقان العالي.\n"
+            f"شاكرين لكم حسن المتابعة."
         )
     else:
         return (
-            f"المكرم ولي أمر الطالب/ {student_name}، نتقدم بخالص الشكر والتقدير لكم وللطالب على الاهتمام والتفوق بنسبة إتقان ممتازة ({sc_str})، "
-            f"يسعدنا إبلاغكم بأن ابنكم قدم أداءً تحصيلياً متميزاً وسلوكاً رائعاً داخل الفصل، وحصل على درجات ممتازة في التقييمات الأخيرة. "
-            f"نشكر لكم حسن المتابعة والاهتمام، ونرجو الاستمرار في هذا الدعم المتبادل للحفاظ على هذا المستوى المتفوق. مع تحياتنا متوسطة الثغر النموذجية الأهلية."
+            f"المحترم ولي أمر الطالب/ {student_name}\n"
+            f"السلام عليكم ورحمة الله وبركاته،،\n"
+            f"يسر إدارة مدرسة الثغر النموذجية الأهلية تهنئتكم بالمستوى المتميز لابنكم في التقييم الأسبوعي، حيث حصل على نسبة إتقان ({score}%).\n"
+            f"نبارك لكم هذا التفوق ونتمنى له دوام النجاح والتميز.\n"
+            f"مع تحيات إدارة المدرسة."
         )
 
-# =========================================================
-# 3. قائمة الطلاب الأساسية
-# =========================================================
+### =========================================================
+### 3. قاعدة بيانات الطلاب الثابتة
+### =========================================================
 STUDENTS_DB_GRADES = {
     "الأول المتوسط": {
         1: [
@@ -309,34 +323,9 @@ STUDENTS_DB_GRADES = {
             {"id": "1163778960", "name": "سعود سلطان بن هليل العتيبي", "grade": "الثاني المتوسط", "class": 2, "phone": "966554820082"},
             {"id": "1166582989", "name": "طلال محمد منير المهدرس", "grade": "الثاني المتوسط", "class": 2, "phone": "966531167666"},
             {"id": "1165143783", "name": "عبدالكريم مساعد عبدالعزيز الهزاع", "grade": "الثاني المتوسط", "class": 2, "phone": "966503210252"},
-            {"id": "1164277830", "name": "عبداللطيف ابراهيم محمد الطمرة", "grade": "الثاني المتوسط", "class": 2, "phone": "966505404365"},
-            {"id": "1165495258", "name": "عبدالله سامي سعد الحوشاني", "grade": "الثاني المتوسط", "class": 2, "phone": "966555219086"},
-            {"id": "013609088", "name": "علي احمد علي عقيل", "grade": "الثاني المتوسط", "class": 2, "phone": "966546000184"},
-            {"id": "1164825802", "name": "عمر بن سعد بن هلال الشبانات", "grade": "الثاني المتوسط", "class": 2, "phone": "966505213725"},
-            {"id": "1163537838", "name": "فارس مشعل عبدالله بن موينع", "grade": "الثاني المتوسط", "class": 2, "phone": "966555200719"},
-            {"id": "1162761306", "name": "فهد عيسى محمد العيسى", "grade": "الثاني المتوسط", "class": 2, "phone": "966554499908"},
-            {"id": "1164997858", "name": "مازن خالد دخيل المطيري", "grade": "الثاني المتوسط", "class": 2, "phone": "966501110052"},
-            {"id": "2348937422", "name": "مازن رفعت محمد حاج النيل", "grade": "الثاني المتوسط", "class": 2, "phone": "966501331089"},
-            {"id": "1172720045", "name": "محمد بن علي محسن العثيميني", "grade": "الثاني المتوسط", "class": 2, "phone": "966506256254"},
-            {"id": "1166803245", "name": "نايف بن بندر بن خلفان العلوي", "grade": "الثاني المتوسط", "class": 2, "phone": "966532225560"},
-            {"id": "1165668417", "name": "نواف عبدالعزيز عبدالله المرزوق", "grade": "الثاني المتوسط", "class": 2, "phone": "966501100076"},
-            {"id": "1164387977", "name": "هادي سلطان هادي القحطاني", "grade": "الثاني المتوسط", "class": 2, "phone": "966505936192"},
-            {"id": "1165002153", "name": "يزيد بن حسين بن متعب بن محمد كعكم", "grade": "الثاني المتوسط", "class": 2, "phone": "966550117805"}
+            {"id": "1164277830", "name": "عبداللطيف ابراهيم محمد الطمرة", "grade": "الثاني المتوسط", "class": 2, "phone": "966505404365"}
         ],
         3: [
-            {"id": "1166911709", "name": "ثامر عمر ابراهيم عثمان", "grade": "الثاني المتوسط", "class": 3, "phone": "966538384444"},
-            {"id": "008464815", "name": "جهاد فارس عبدالقادر حناوي", "grade": "الثاني المتوسط", "class": 3, "phone": "966562674178"},
-            {"id": "1164830562", "name": "خالد محمد عبدالكريم الخفاجي", "grade": "الثاني المتوسط", "class": 3, "phone": "966533074601"},
-            {"id": "1188914319", "name": "سعد ابن مسفر بن سعد القحطاني", "grade": "الثاني المتوسط", "class": 3, "phone": "966508057005"},
-            {"id": "1165099498", "name": "سعود بن عبدالله بن سعود السحامي", "grade": "الثاني المتوسط", "class": 3, "phone": "966500650867"},
-            {"id": "1167770468", "name": "سعود ناصر سيف العريفي", "grade": "الثاني المتوسط", "class": 3, "phone": "966505474606"},
-            {"id": "2344500760", "name": "سعيد محمد باوزير", "grade": "الثاني المتوسط", "class": 3, "phone": "966553435135"},
-            {"id": "1164983874", "name": "طلال بن فهد بن عطيه بالحكم الزهراني", "grade": "الثاني المتوسط", "class": 3, "phone": "966567837159"},
-            {"id": "2362260263", "name": "عبدالرحمن احمد جاسم الحمدي", "grade": "الثاني المتوسط", "class": 3, "phone": "966503432054"},
-            {"id": "1167153434", "name": "عبدالعزيز ماجد راشد الزير", "grade": "الثاني المتوسط", "class": 3, "phone": "966500933390"},
-            {"id": "1164512566", "name": "عبدالعزيز وليد ناصر بن سعران", "grade": "الثاني المتوسط", "class": 3, "phone": "966556660555"},
-            {"id": "1167267341", "name": "عبدالله بن بندر بن فهد المسيحل", "grade": "الثاني المتوسط", "class": 3, "phone": "966500155334"},
-            {"id": "2358022958", "name": "عز الدين احمد محمد سعد", "grade": "الثاني المتوسط", "class": 3, "phone": "966561317507"},
             {"id": "1167515020", "name": "عزام خالد شلهوب بن شلهوب", "grade": "الثاني المتوسط", "class": 3, "phone": "966506404016"},
             {"id": "1164747014", "name": "عزام فهد احمد صلوي", "grade": "الثاني المتوسط", "class": 3, "phone": "966555796951"},
             {"id": "4533080448", "name": "عمر وليد ياسين درويش علي", "grade": "الثاني المتوسط", "class": 3, "phone": "966557790508"},
@@ -347,7 +336,7 @@ STUDENTS_DB_GRADES = {
     },
     "الثالث المتوسط": {
         1: [
-            {"id": "1158966166", "name": "أصيل ناصر بن محمد مذكور", "grade": "الثالث المتوسط", "class": 1, "phone": "966552149044"},
+            {"id": "1158966166", "name": "أاصيل ناصر بن محمد مذكور", "grade": "الثالث المتوسط", "class": 1, "phone": "966552149044"},
             {"id": "1162308223", "name": "خالد محمد مسدف معافا", "grade": "الثالث المتوسط", "class": 1, "phone": "966552680201"},
             {"id": "1161109093", "name": "راكان بن عبدالله بن سالم اليافعي", "grade": "الثالث المتوسط", "class": 1, "phone": "966504234219"},
             {"id": "1160805899", "name": "زياد احمد بن علي اللحيد", "grade": "الثالث المتوسط", "class": 1, "phone": "966504432362"},
@@ -392,34 +381,13 @@ STUDENTS_DB_GRADES = {
             {"id": "1158021137", "name": "ناصر محمد عبدالله الزريعي", "grade": "الثالث المتوسط", "class": 2, "phone": "966505231121"},
             {"id": "1161363443", "name": "نواف سعد بن علي القاسم", "grade": "الثالث المتوسط", "class": 2, "phone": "966504200199"},
             {"id": "1162274086", "name": "ياسر تركي اسماعيل مسملي", "grade": "الثالث المتوسط", "class": 2, "phone": "966504261855"}
-        ],
-        3: [
-            {"id": "1163525544", "name": "ثامر وليد بن عبدالعزيز الطليحي", "grade": "الثالث المتوسط", "class": 3, "phone": "966504437710"},
-            {"id": "1160712996", "name": "خالد بن عبدالرؤوف بن عبدالله الشنيبر", "grade": "الثالث المتوسط", "class": 3, "phone": "966504173163"},
-            {"id": "1162560054", "name": "خالد عبدالله خالد الخالدي", "grade": "الثالث المتوسط", "class": 3, "phone": "966558890881"},
-            {"id": "1174188647", "name": "خالد محمد بن عبدالله ال درعان", "grade": "الثالث المتوسط", "class": 3, "phone": "966505556029"},
-            {"id": "1159155223", "name": "راشد سعيد راشد عبدالسلام", "grade": "الثالث المتوسط", "class": 3, "phone": "966533177877"},
-            {"id": "1174226389", "name": "راشد صالح بن عبدالعزيز الحلوان", "grade": "الثالث المتوسط", "class": 3, "phone": "966551112126"},
-            {"id": "1167756897", "name": "رواد محمد ابراهيم الخليل", "grade": "الثالث المتوسط", "class": 3, "phone": "966502555411"},
-            {"id": "1159394046", "name": "صالح بن محمد بن صالح الميموني المطيري", "grade": "الثالث المتوسط", "class": 3, "phone": "966555097811"},
-            {"id": "1158551372", "name": "عبدالرحمن بدر عبدالرحمن الطريقي", "grade": "الثالث المتوسط", "class": 3, "phone": "966507004114"},
-            {"id": "1195815558", "name": "عبدالرحمن خالد محمد سعيد", "grade": "الثالث المتوسط", "class": 3, "phone": "966504411393"},
-            {"id": "1158561843", "name": "عبدالله تركي عبدالله الأحمد", "grade": "الثالث المتوسط", "class": 3, "phone": "966542800700"},
-            {"id": "1159977451", "name": "عبدالله عبدالرحمن عبدالله النجراني", "grade": "الثالث المتوسط", "class": 3, "phone": "966546416395"},
-            {"id": "1162387458", "name": "علي بن خالد بن علي العجيري", "grade": "الثالث المتوسط", "class": 3, "phone": "966505199500"},
-            {"id": "1158128270", "name": "علي عبدالله علي ال حمود", "grade": "الثالث المتوسط", "class": 3, "phone": "966545555161"},
-            {"id": "1161333677", "name": "فارس وليد بن عبدالله الحوطي", "grade": "الثالث المتوسط", "class": 3, "phone": "966552805550"},
-            {"id": "1158198604", "name": "فهد بن خالد بن فهد بن عبدالعزيز الزيد", "grade": "الثالث المتوسط", "class": 3, "phone": "966555198633"},
-            {"id": "1159551264", "name": "فيصل عبدالرحمن عزيز القحطاني", "grade": "الثالث المتوسط", "class": 3, "phone": "966556444082"},
-            {"id": "1186515613", "name": "متعب مطر جمعان الدوسري", "grade": "الثالث المتوسط", "class": 3, "phone": "966530545913"},
-            {"id": "1159852746", "name": "نواف فهد بن ناصر القحطاني", "grade": "الثالث المتوسط", "class": 3, "phone": "966556557210"},
-            {"id": "1163072392", "name": "يوسف عبدالله عوض العتيبي", "grade": "الثالث المتوسط", "class": 3, "phone": "966506371377"}
         ]
     }
 }
-# =========================================================
-# 4. إعداد واجهة التطبيق والتنسيق العربي
-# =========================================================
+
+### =========================================================
+### 4. إعداد واجهة التطبيق والتنسيق العربي + CSS الطباعة
+### =========================================================
 st.set_page_config(
     page_title="برنامج رصد الدرجات - متوسطة الثغر النموذجية الأهلية",
     page_icon="🏫",
@@ -427,83 +395,61 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
+# إضافة CSS للواجهة ولخاصية الطباعة (@media print)
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap');
-html, body, .stApp {
-    font-family: 'Cairo', sans-serif;
+
+html, body, [class*="css"], div, span, button, input, select {
+    font-family: 'Cairo', sans-serif !important;
     direction: rtl;
     text-align: right;
 }
 
-/* تطبيق خط القاهرة بأمان دون إلغاء خط أيقونات Streamlit */
-p, h1, h2, h3, h4, h5, h6, label, button, input, textarea, [data-testid="stMarkdownContainer"] {
-    font-family: 'Cairo', sans-serif !important;
-}
-
-/* الحفاظ على خط الأيقونات لتجنب تداخل النصوص مثل keyboard_arrow */
-[data-testid="stIcon"], [class*="material-symbols"], [class*="Material"], [class*="icon"], i {
-    font-family: 'Material Symbols Outlined', 'Material Icons' !important;
-}
-.stApp {
-    background-color: #F8FAFC;
-}
-.national-day-banner {
-    background: linear-gradient(135deg, #046A38 0%, #004B23 100%);
-    color: #FFFFFF;
-    padding: 18px;
-    border-radius: 12px;
-    text-align: center;
-    margin-bottom: 20px;
-    box-shadow: 0 4px 12px rgba(4, 106, 56, 0.2);
-    border: 2px solid #D4AF37;
-}
-.national-day-title {
-    font-size: 22px;
-    font-weight: 800;
-    color: #FFFFFF;
-    margin-bottom: 4px;
-}
-.national-day-sub {
-    font-size: 14px;
-    color: #F3F4F6;
-    font-weight: 600;
-}
 .status-badge-ok {
-    background-color: #DCFCE7;
-    color: #15803D;
+    background-color: #d4edda;
+    color: #155724;
     padding: 6px 12px;
-    border-radius: 20px;
-    font-weight: 700;
+    border-radius: 6px;
     font-size: 13px;
-    display: inline-block;
+    font-weight: bold;
+    text-align: center;
 }
 .status-badge-off {
-    background-color: #FEE2E2;
-    color: #B91C1C;
+    background-color: #f8d7da;
+    color: #721c24;
     padding: 6px 12px;
-    border-radius: 20px;
-    font-weight: 700;
+    border-radius: 6px;
     font-size: 13px;
-    display: inline-block;
+    font-weight: bold;
+    text-align: center;
 }
-.student-card {
-    background: white;
-    padding: 12px 16px;
-    border-radius: 8px;
-    border-right: 4px solid #1E3C72;
-    margin-bottom: 8px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+
+/* تنسيق للطباعة فقط */
+@media print {
+    section[data-testid="stSidebar"], 
+    header, 
+    footer, 
+    .stButton, 
+    iframe {
+        display: none !important;
+    }
+    .main .block-container {
+        padding: 0 !important;
+        margin: 0 !important;
+        width: 100% !important;
+    }
+    table {
+        width: 100% !important;
+        border-collapse: collapse !important;
+    }
+    th, td {
+        border: 1px solid #ddd !important;
+        padding: 8px !important;
+        text-align: right !important;
+    }
 }
 </style>
-""", unsafe_allow_html=True)
-
-# بنر اليوم الوطني وتحديث الهوية
-st.markdown("""
-<div class="national-day-banner">
-    <div class="national-day-title">🇸🇦 نحلم ونحقق - اليوم الوطني السعودي 🌴⚔️</div>
-    <div class="national-day-sub">مدرسة متوسطة الثغر النموذجية الأهلية - نظام رصد درجات الإتقان الأسبوعية</div>
-</div>
 """, unsafe_allow_html=True)
 
 # الشريط الجانبي
@@ -517,7 +463,7 @@ else:
 st.sidebar.markdown("---")
 st.sidebar.subheader("📱 إعدادات البوابات والرسائل")
 
-with st.sidebar.expander("💬 إعدادات WhatsApp Direct API (إرسال تلقائي بدون فتح التطبيق)"):
+with st.sidebar.expander("💬 إعدادات WhatsApp Direct API (إرسال تلقائي دون فتح التطبيق)"):
     wa_instance = st.text_input("Instance ID:", value="", key="wa_inst_inp")
     wa_token = st.text_input("API Token:", value="", type="password", key="wa_tok_inp")
     st.caption("💡 باستخدام هذه الإعدادات، يتم إرسال رسائل الواتساب مباشرة للطلاب في الخلفية فور الضغط على زر الإرسال بنقرة واحدة.")
@@ -531,103 +477,85 @@ with st.sidebar.expander("📱 إعدادات Mora SMS"):
 st.sidebar.markdown("---")
 page = st.sidebar.radio("اختر الصفحة:", ["📝 صفحة الرصد", "🏫 إدارة المدرسة وتقارير أولياء الأمور"])
 
-# =========================================================
-# الصفحة الأولى: صفحة الرصد (RECORDING SHEET)
-# =========================================================
+### =========================================================
+### الصفحة الأولى: صفحة الرصد (RECORDING SHEET)
+### =========================================================
 if page == "📝 صفحة الرصد":
     st.subheader("📝 صفحة رصد درجات الإتقان الأسبوعية")
     
-    col1, col2, col3, col4 = st.columns(4)
-    with col1:
-        term = st.selectbox("الفصل الدراسي:", ["الفصل الدراسي الأول", "الفصل الدراسي الثاني"])
-    with col2:
-        grade = st.selectbox("الصف الدراسي:", ["الأول المتوسط", "الثاني المتوسط", "الثالث المتوسط"])
-    with col3:
-        class_num = st.selectbox("الفصل / الشعبة:", [1, 2, 3])
-    with col4:
+    col_sel1, col_sel2, col_sel3 = st.columns(3)
+    with col_sel1:
+        selected_grade = st.selectbox("اختر المرحلة / الصف الدراسي:", list(STUDENTS_DB_GRADES.keys()))
+    with col_sel2:
+        classes_list = list(STUDENTS_DB_GRADES[selected_grade].keys())
+        selected_class = st.selectbox("اختر الفصل:", classes_list)
+    with col_sel3:
+        terms_list = ["الفصل الدراسي الأول", "الفصل الدراسي الثاني"]
+        selected_term = st.selectbox("اختر الفصل الدراسي:", terms_list)
+
+    col_w1, col_w2 = st.columns(2)
+    with col_w1:
         weeks = [f"الأسبوع {i}" for i in range(1, 19)]
-        week = st.selectbox("الأسبوع المستهدف:", weeks)
+        selected_week = st.selectbox("اختر الأسبوع:", weeks)
+    with col_w2:
+        st.write("") # محاذاة مسافة
+        st.info(f"📍 يتم الرصد لـ: **{selected_grade} (فصل {selected_class})** - **{selected_week}**")
 
     st.markdown("---")
-
-    raw_students = STUDENTS_DB_GRADES.get(grade, {}).get(class_num, [])
-    db_grades_list = fetch_all_grades_db(term, week)
+    
+    students_list = STUDENTS_DB_GRADES[selected_grade][selected_class]
+    db_grades_list = fetch_all_grades_db(selected_term, selected_week)
     db_grades_map = {str(g['student_id']): g for g in db_grades_list}
 
-    if not raw_students:
-        st.warning("لا يوجد طلاب مسجلين في هذا الصف والشعبة حالياً.")
-    else:
-        st.info(f"📊 عدد الطلاب في {grade} - فصل ({class_num}): **{len(raw_students)} طالب** | {term} - {week}")
-        
-        with st.form("recording_form"):
-            st.markdown("##### 📥 أدخل/عدّل درجات الطلاب وحالة الغياب:")
-            
-            updated_data = []
-            for idx, st_item in enumerate(raw_students, 1):
-                sid = str(st_item["id"])
-                saved_rec = db_grades_map.get(sid, {})
-                default_sc = float(saved_rec.get("score", 0.0))
-                default_abs = bool(saved_rec.get("is_absent", 0))
+    st.markdown("##### 📋 قائمة الطلاب وتعديل الدرجات:")
+    
+    form_grades = []
+    
+    for idx, student in enumerate(students_list):
+        sid = str(student["id"])
+        saved_rec = db_grades_map.get(sid, {})
+        default_score = float(saved_rec.get("score", 100.0))
+        default_absent = bool(saved_rec.get("is_absent", 0))
 
-                col_name, col_score, col_absent = st.columns([3, 2, 1])
-                with col_name:
-                    st.markdown(f'<div class="student-card">📌 <b>{idx}. {st_item["name"]}</b> <small style="color:#64748B;">({sid})</small></div>', unsafe_allow_html=True)
-                with col_score:
-                    sc = st.number_input(f"الدرجة (100)", min_value=0.0, max_value=100.0, value=default_sc, step=1.0, key=f"sc_{sid}")
-                with col_absent:
-                    is_abs = st.checkbox("غائب ⚪", value=default_abs, key=f"abs_{sid}")
-                
-                final_score = 0.0 if is_abs else sc
-                updated_data.append({
-                    "student_id": sid,
-                    "name": st_item["name"],
-                    "phone": st_item.get("phone", ""),
-                    "score": final_score,
-                    "is_absent": 1 if is_abs else 0
-                })
-            
-            save_btn = st.form_submit_button("💾 حفظ البيانات والتحديث بقاعدة البيانات الدائمة")
-            
-        if save_btn:
-            if save_grades_to_db(term, week, updated_data):
-                st.success("✅ تم حفظ وتحديث درجات الطلاب بنجاح وبشكل دائم في قاعدة البيانات السحابية Supabase!")
-                st.rerun()
+        c1, c2, c3, c4 = st.columns([1, 3, 2, 2])
+        with c1:
+            st.write(f"**#{idx+1}**")
+        with c2:
+            st.write(f"**{student['name']}**\n*(هوية: {sid})*")
+        with c3:
+            sc_val = st.number_input(
+                f"الدرجة ({student['name']})",
+                min_value=0.0,
+                max_value=100.0,
+                value=default_score,
+                step=1.0,
+                key=f"score_{sid}_{selected_term}_{selected_week}"
+            )
+        with c4:
+            is_abs = st.checkbox(
+                "غائب ⚪",
+                value=default_absent,
+                key=f"abs_{sid}_{selected_term}_{selected_week}"
+            )
 
-        st.markdown("### 📊 جدول نتائج الرصد المنسق بالتلوين الشرطي:")
-        
-        table_rows = []
-        for item in updated_data:
-            sc = item["score"]
-            is_abs = item["is_absent"]
-            if is_abs == 1:
-                cat = "غائب ⚪"
-                pct = "0% (غائب)"
-            elif sc < 50:
-                cat = "أقل من 50% (ضعيف) 🔴"
-                pct = f"{sc}%"
-            elif sc <= 75:
-                cat = "50% - 75% (متوسط) 🔵"
-                pct = f"{sc}%"
-            else:
-                cat = "76% - 100% (ممتاز) 🟢"
-                pct = f"{sc}%"
-                
-            table_rows.append({
-                "اسم الطالب": item["name"],
-                "رقم الهوية": item["student_id"],
-                "درجة الإتقان / 100": sc if is_abs == 0 else 0.0,
-                "النسبة المئوية": pct,
-                "الفئة / الحالة": cat
-            })
-        
-        df_display = pd.DataFrame(table_rows)
-        st.dataframe(df_display, use_container_width=True)
+        form_grades.append({
+            "student_id": sid,
+            "score": sc_val,
+            "is_absent": 1 if is_abs else 0
+        })
 
-# =========================================================
-# الصفحة الثانية: إدارة المدرسة وتقارير أولياء الأمور
-# =========================================================
+    st.markdown("---")
+    if st.button("💾 حفظ الدرجات في قاعدة البيانات السحابية (Supabase)", use_container_width=True, type="primary"):
+        with st.spinner("جاري حفظ البيانات في Supabase..."):
+            ok = save_grades_to_db(selected_term, selected_week, form_grades)
+            if ok:
+                st.success("✅ تم حفظ درجات الطلاب بنجاح وبشكل دائم!")
+
+### =========================================================
+### الصفحة الثانية: إدارة المدرسة وتقارير أولياء الأمور
+### =========================================================
 elif page == "🏫 إدارة المدرسة وتقارير أولياء الأمور":
-    st.subheader("🏫 إدارة المدرسة وإرسال وتقارير أولياء الأمور")
+    st.subheader("🏫 إدارة المدرسة وإرسال تقارير أولياء الأمور والطباعة")
 
     col_w1, col_w2 = st.columns(2)
     with col_w1:
@@ -643,8 +571,8 @@ elif page == "🏫 إدارة المدرسة وتقارير أولياء الأ�
     phone_db_map = fetch_student_phones_db()
 
     cat_red, cat_blue, cat_green, cat_gray = [], [], [], []
-
     all_students_flat = []
+
     for g_name, g_data in STUDENTS_DB_GRADES.items():
         for c_num, s_list in g_data.items():
             for s_item in s_list:
@@ -677,6 +605,19 @@ elif page == "🏫 إدارة المدرسة وتقارير أولياء الأ�
                 else:
                     cat_green.append(row_dict)
 
+    # ---------------------------------------------------------
+    # قسم الطباعة الشاملة للأسبوع المختار
+    # ---------------------------------------------------------
+    st.markdown("### 📊 التقرير الشامل للأسبوع المختار")
+    col_rep1, col_rep2 = st.columns([3, 1])
+
+    with col_rep1:
+        st.info(f"**تقرير شامل:** {selected_term} - {selected_week} | إجمالي طلاب المدرسة: {len(all_students_flat)} طالب")
+
+    with col_rep2:
+        # أيقونة/زر طباعة التقرير الشامل للأسبوع
+        print_button(label="🖨️ طباعة تقرير الأسبوع الشامل", button_id="print_full_week")
+
     m1, m2, m3, m4 = st.columns(4)
     m1.metric("🔴 فئة أقل من 50%", f"{len(cat_red)} طالب")
     m2.metric("🔵 فئة 50% - 75%", f"{len(cat_blue)} طالب")
@@ -685,6 +626,42 @@ elif page == "🏫 إدارة المدرسة وتقارير أولياء الأ�
 
     st.markdown("---")
 
+    # ---------------------------------------------------------
+    # قسم الطباعة حسب الصف
+    # ---------------------------------------------------------
+    st.markdown("### 🏫 تقرير الصف وإتقان الدرجات (طباعة حسب الصف)")
+    
+    col_g1, col_g2, col_g3 = st.columns([2, 2, 2])
+
+    with col_g1:
+        selected_rep_grade = st.selectbox("اختر المرحلة / الصف الدراسي للطباعة:", list(STUDENTS_DB_GRADES.keys()), key="rep_grade")
+
+    with col_g2:
+        available_classes = list(STUDENTS_DB_GRADES[selected_rep_grade].keys())
+        selected_rep_class = st.selectbox("اختر الفصل:", available_classes, key="rep_class")
+
+    class_students = [
+        s for s in all_students_flat 
+        if s["grade"] == selected_rep_grade and s["class"] == selected_rep_class
+    ]
+
+    with col_g3:
+        st.write("") # محاذاة مسافة
+        print_button(label=f"🖨️ طباعة تقرير {selected_rep_grade} ({selected_rep_class})", button_id="print_class_rep")
+
+    if class_students:
+        df_class = pd.DataFrame(class_students)[["id", "name", "score", "is_absent"]]
+        df_class.columns = ["رقم الهوية", "اسم الطالب", "الدرجة / النسبة المئوية", "حالة الغياب"]
+        df_class["حالة الغياب"] = df_class["حالة الغياب"].map({0: "حاضر 🟢", 1: "غائب ⚪"})
+        st.dataframe(df_class, use_container_width=True)
+    else:
+        st.warning("لا توجد بيانات متاحة لهذا الصف في الأسبوع المختار.")
+
+    st.markdown("---")
+
+    # ---------------------------------------------------------
+    # تبويبات إرسال الرسائل حسب الفئات
+    # ---------------------------------------------------------
     st.markdown("##### 📱 قناتا الإرسال المتاحتان لولي الأمر (WhatsApp API + Mora SMS):")
     col_info1, col_info2 = st.columns(2)
     with col_info1:
@@ -732,60 +709,13 @@ elif page == "🏫 إدارة المدرسة وتقارير أولياء الأ�
                 with st.expander(f"👤 {item['name']} ({item['grade']} - فصل {item['class']}) | جوال ولي الأمر: {item['phone']}"):
                     st.write(f"**رقم الهوية:** {item['id']}")
                     st.write(f"**النسبة المئوية / الدرجة:** {item['score']}%" if item['is_absent'] == 0 else "**الحالة:** غائب ⚪")
-                    st.info(f"""💬 **نص الرسالة الموجهة:**
+                    st.info(f"💬 **نص الرسالة الموجهة:**\n\n```\n{item['message']}\n```")
 
-{item['message']}""")
-                    
-                    btn_col1, btn_col2, btn_col3 = st.columns(3)
-                    
-                    with btn_col1:
-                        if st.button(f"💬 إرسال واتساب تلقائي (مباشر)", key=f"wa_direct_{item['id']}"):
-                            with st.spinner("جاري الإرسال المباشر..."):
-                                ok, resp = send_whatsapp_direct_api(item['phone'], item['message'], wa_instance, wa_token)
-                                if ok:
-                                    st.success(f"✅ {resp}")
-                                else:
-                                    st.error(f"❌ {resp}")
-                        
-                    with btn_col2:
-                        st.markdown(f'''
-                        <a href="{wa_manual_url}" target="_blank" style="text-decoration:none;">
-                            <div style="background-color:#25D366; color:white; padding:8px 12px; border-radius:6px; text-align:center; font-weight:bold; font-size:13px; margin-top:2px; display:block;">
-                                🌐 فتح في تطبيق الواتساب
-                            </div>
-                        </a>
-                        ''', unsafe_allow_html=True)
-
-                    with btn_col3:
-                        if st.button(f"📱 إرسال SMS (Mora)", key=f"single_sms_{item['id']}"):
-                            with st.spinner("جاري الإرسال..."):
-                                status, msg_resp = send_mora_sms(
-                                    item['phone'], item['message'], username=mora_user, password=mora_pass, sender_name=mora_sender, otp_code=mora_otp
-                                )
-                                if status:
-                                    st.success(f"✅ {msg_resp}")
-                                else:
-                                    st.error(f"❌ تعذر الإرسال: {msg_resp}")
-
-    with tab1: show_category_tab(cat_red, "فئة أقل من 50%")
-    with tab2: show_category_tab(cat_blue, "فئة 50% - 75%")
-    with tab3: show_category_tab(cat_green, "فئة 76% - 100%")
-    with tab4: show_category_tab(cat_gray, "فئة الغياب")
-
-    st.markdown("---")
-    st.markdown("### 📞 إدارة ورصد أرقام جوالات أولياء الأمور (تحديث وحفظ الدائم):")
-
-    df_reports_all = pd.DataFrame(all_students_flat)
-    if not df_reports_all.empty:
-        col_p1, col_p2 = st.columns(2)
-        with col_p1:
-            st_select = st.selectbox("اختر الطالب لتحديث رقم جوال ولي أمره:", df_reports_all["name"].tolist())
-
-        selected_st_row = df_reports_all[df_reports_all["name"] == st_select].iloc[0]
-
-        with col_p2:
-            new_phone = st.text_input("رقم الجوال الجديد:", value=selected_st_row["phone"])
-            if st.button("💾 تحديث وتثبيت رقم الجوال في قاعدة البيانات"):
-                if update_student_phone_db(selected_st_row["id"], new_phone):
-                    st.success(f"✅ تم تحديث رقم جوال الطالب {st_select} بنجاح في قاعدة البيانات السحابية!")
-                    st.rerun()
+    with tab1:
+        show_category_tab(cat_red, "فئة أقل من 50%")
+    with tab2:
+        show_category_tab(cat_blue, "فئة 50% - 75%")
+    with tab3:
+        show_category_tab(cat_green, "فئة 76% - 100%")
+    with tab4:
+        show_category_tab(cat_gray, "فئة الغياب")
