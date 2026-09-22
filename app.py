@@ -203,9 +203,9 @@ def render_clean_html(html_str):
     cleaned_html = "".join(lines)
     st.markdown(cleaned_html, unsafe_allow_html=True)
 
-### =========================================================
-### 3. خدمات WhatsApp Direct API و Mora SMS
-### =========================================================
+# =========================================================
+# 2. دوال إرسال الرسائل (Mora SMS + WhatsApp Gateway API)
+# =========================================================
 def send_whatsapp_direct_api(phone, message, instance_id="", api_token=""):
     if not api_token or not instance_id:
         return False, "يرجى إدخال Instance ID و API Token الخاص بخدمة WhatsApp Gateway في القائمة الجانبية."
@@ -232,44 +232,30 @@ def send_whatsapp_direct_api(phone, message, instance_id="", api_token=""):
     except Exception as e:
         return False, f"فشل الاتصال بـ API: {e}"
 
-def create_whatsapp_web_url(phone, message):
+def send_mora_sms(phone, message, username, password, sender_name, otp_code=""):
     phone_clean = str(phone).strip().replace("+", "").replace(" ", "").replace("-", "")
     if phone_clean.startswith("05"):
         phone_clean = "966" + phone_clean[1:]
     elif phone_clean.startswith("5"):
         phone_clean = "966" + phone_clean
-    msg_encoded = urllib.parse.quote(message)
-    return f"https://api.whatsapp.com/send?phone={phone_clean}&text={msg_encoded}"
 
-def send_mora_sms(phone, message, username="966508634881", password="", sender="THAGHR-S", otp=""):
-    if not username or not password:
-        return False, "يرجى التأكد من إعدادات حساب Mora SMS."
-    phone_clean = str(phone).strip().replace("+", "").replace(" ", "").replace("-", "")
-    if phone_clean.startswith("05"):
-        phone_clean = "966" + phone_clean[1:]
-    elif phone_clean.startswith("5"):
-        phone_clean = "966" + phone_clean
-        
-    url = "https://www.mora-sms.com/api/sendsms.php"
-    params = {
+    url = "https://mora-sa.com/api/v1/sendsms"
+    payload = {
         "username": username,
         "password": password,
-        "sender": sender,
+        "sender": sender_name,
         "numbers": phone_clean,
         "message": message,
-        "unicode": "E",
-        "return": "json"
+        "otp": otp_code
     }
-    if otp:
-        params["otp"] = otp
     try:
-        resp = requests.get(url, params=params, timeout=10)
-        if resp.status_code == 200:
-            return True, "تم إرسال الرسالة النصية بنجاح عبر Mora SMS."
+        res = requests.post(url, data=payload, timeout=10)
+        if res.status_code == 200:
+            return True, "تم إرسال SMS بنجاح عبر Mora!"
         else:
-            return False, f"خطأ في الإرسال: {resp.text}"
-    except Exception as e:
-        return False, f"فشل الاتصال بـ Mora SMS: {e}"
+            return False, f"خطأ Mora: {res.text}"
+    except Exception as ex:
+        return False, f"تعذر الإرسال: {ex}"
 
 def send_bulk_messages(students_list, channel="sms", mora_creds={}, wa_creds={}):
     succ, fail = 0, 0
@@ -281,45 +267,47 @@ def send_bulk_messages(students_list, channel="sms", mora_creds={}, wa_creds={})
             status, resp = send_whatsapp_direct_api(phone, msg, wa_creds.get("instance_id", ""), wa_creds.get("api_token", ""))
         else:
             status, resp = send_mora_sms(phone, msg, mora_creds.get("username", ""), mora_creds.get("password", ""), mora_creds.get("sender", ""), mora_creds.get("otp", ""))
+        
         if status:
             succ += 1
         else:
             fail += 1
-        details.append({"name": st_item['name'], "status": status, "response": resp})
+        details.append((st_item['name'], phone, status, resp))
     return succ, fail, details
 
-def generate_parent_message(student_name, score, is_absent=False):
+def create_whatsapp_web_url(phone, text):
+    phone_clean = str(phone).strip().replace("+", "").replace(" ", "").replace("-", "")
+    if phone_clean.startswith("05"):
+        phone_clean = "966" + phone_clean[1:]
+    elif phone_clean.startswith("5"):
+        phone_clean = "966" + phone_clean
+    encoded_text = urllib.parse.quote(text)
+    return f"https://api.whatsapp.com/send?phone={phone_clean}&text={encoded_text}"
+
+def generate_parent_message(student_name, score, is_absent):
     if is_absent:
         return (
-            f"المحترم ولي أمر الطالب/ {student_name}\n"
-            f"السلام عليكم ورحمة الله وبركاته،،\n"
-            f"نحيطكم علماً بأن ابنكم كان غائباً عن اختبار التقييم الأسبوعي لهذا الأسبوع في مدرسة الثغر النموذجية الأهلية.\n"
-            f"نرجو التواصل مع إدارة المدرسة لمتابعة حالة الطالب.\n"
-            f"شاكرين حسن تعاونكم."
+            f"المكرم ولي أمر الطالب/ {student_name}، نود التنبيه على غياب الطالب هذا اليوم، "
+            f"ونحثكم على متابعة الانتظام وحضور الاختبارات لتجنب حسم الدرجات والتأثير على مستواه التحصيلي: متوسطة الثغر النموذجية الأهلية."
         )
-    elif score is None or score < 50:
+    sc_str = f"{score}%" if score is not None else "أقل من 50%"
+    if score is None or score < 50:
         return (
-            f"المحترم ولي أمر الطالب/ {student_name}\n"
-            f"السلام عليكم ورحمة الله وبركاته،،\n"
-            f"نود إشعاركم بأن مستوى الطالب في تقييم هذا الأسبوع بحاجة إلى متابعة واهتمام، حيث حصل على نسبة ({score}%).\n"
-            f"نأمل حث الطالب على الاستذكار والمراجعة لرفع مستواه.\n"
-            f"شاكرين اهتمامكم الدائم."
+            f"المكرم ولي أمر الطالب/ {student_name}، نفيدكم بأن نسبة إتقان الطالب هذا الأسبوع هي ({sc_str}). "
+            f"حرصاً منا على مصلحة ابنكم ومستقبله الدراسي، نود إشعاركم بوجود تراجع ملحوظ في مستواه التحصيلي مؤخراً، "
+            f"ونرجو منكم تكثيف المتابعة المنزلية والتواصل معنا للوقوف على أسباب هذا التراجع ووضع خطة لتحسين أدائه. مع تحياتنا متوسطة الثغر النموذجية الأهلية."
         )
     elif score <= 75:
         return (
-            f"المحترم ولي أمر الطالب/ {student_name}\n"
-            f"السلام عليكم ورحمة الله وبركاته،،\n"
-            f"نحيطكم علماً بأن ابنكم حقق مستوى جيداً في التقييم الأسبوعي بنسبة ({score}%).\n"
-            f"نتطلع إلى مزيد من الجهد للوصول إلى مستوى الإتقان العالي.\n"
-            f"شاكرين لكم حسن المتابعة."
+            f"المكرم ولي أمر الطالب/ {student_name}، نفيدكم بأن نسبة إتقان الطالب هذا الأسبوع هي ({sc_str}). "
+            f"نود إحاطتكم علماً بأن المستوى التحصيلي لابنكم جيد ومستقر بشكل عام، ولكنه يمتلك قدرات أعلى تؤهله لتحقيق درجات أفضل. "
+            f"نأمل منكم التركيز معه في الفترة القادمة لرفع كفاءته الدراسية. شاكرين لكم تعاونكم الدائم. مع تحياتنا متوسطة الثغر النموذجية الأهلية."
         )
     else:
         return (
-            f"المحترم ولي أمر الطالب/ {student_name}\n"
-            f"السلام عليكم ورحمة الله وبركاته،،\n"
-            f"يسر إدارة مدرسة الثغر النموذجية الأهلية تهنئتكم بالمستوى المتميز لابنكم في التقييم الأسبوعي، حيث حصل على نسبة إتقان ({score}%).\n"
-            f"نبارك لكم هذا التفوق ونتمنى له دوام النجاح والتميز.\n"
-            f"مع تحيات إدارة المدرسة."
+            f"المكرم ولي أمر الطالب/ {student_name}، نتقدم بخالص الشكر والتقدير لكم وللطالب على الاهتمام والتفوق بنسبة إتقان ممتازة ({sc_str})، "
+            f"يسعدنا إبلاغكم بأن ابنكم قدم أداءً تحصيلياً متميزاً وسلوكاً رائعاً داخل الفصل، وحصل على درجات ممتازة في التقييمات الأخيرة. "
+            f"نشكر لكم حسن المتابعة والاهتمام، ونرجو الاستمرار في هذا الدعم المتبادل للحفاظ على هذا المستوى المتفوق. مع تحياتنا متوسطة الثغر النموذجية الأهلية."
         )
 
 ### =========================================================
@@ -1013,9 +1001,9 @@ elif page == "🏫 إدارة المدرسة وتقارير أولياء الأ�
         <br/>
         <table style="width: 100%; margin-top: 25px; border: none; text-align: center; font-size: 13px; font-weight: bold;">
             <tr>
-                <td style="width: 33%; border: none;">معلم المادة:<br/><br/>...........................</td>
-                <td style="width: 33%; border: none;">وكيل الشؤون التعليمية:<br/><br/>...........................</td>
-                <td style="width: 34%; border: none;">مدير المدرسة:<br/><br/>...........................</td>
+                <td style="width: 33%; border: none;">وكيل شؤون الطلاب:<br/><br/>صالح بن عبدالله الدعجاني </td>
+                <td style="width: 33%; border: none;">وكيل الشؤون التعليمية:<br/><br/>محمد مبروك السيد </td>
+                <td style="width: 34%; border: none;">مدير المدرسة:<br/><br/>إبراهيم بن موسى التميمي </td>
             </tr>
         </table>
     </div>
