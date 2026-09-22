@@ -819,7 +819,7 @@ elif page == "🏫 إدارة المدرسة وتقارير أولياء الأ�
 
             st.markdown("<div style='margin-bottom: 15px;'></div>", unsafe_allow_html=True)
 
-             for idx_st, item in enumerate(cat_list):
+            for idx_st, item in enumerate(cat_list):
                 wa_manual_url = create_whatsapp_web_url(item['phone'], item['message'])
                 score_str = f"{item['score']}%" if item['is_absent'] == 0 else "غائب ⚪"
                 
