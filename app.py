@@ -529,123 +529,111 @@ st.set_page_config(
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap');
+
 html, body, .stApp {
-    font-family: 'Cairo', sans-serif;
-    direction: rtl;
-    text-align: right;
-}
-
-/* تطبيق خط القاهرة بأمان دون إلغاء خط أيقونات Streamlit */
-p, h1, h2, h3, h4, h5, h6, label, button, input, textarea, [data-testid="stMarkdownContainer"] {
     font-family: 'Cairo', sans-serif !important;
-}
-
-/* الحفاظ على خط الأيقونات لتجنب تداخل النصوص مثل keyboard_arrow */
-[data-testid="stIcon"], [class*="material-symbols"], [class*="Material"], [class*="icon"], i {
-    font-family: 'Material Symbols Outlined', 'Material Icons' !important;
-}
-.stApp {
-    background-color: #F8FAFC;
-}
-.national-day-banner {
-    background: linear-gradient(135deg, #046A38 0%, #004B23 100%);
-    color: #FFFFFF;
-    padding: 18px;
-    border-radius: 12px;
-    text-align: center;
-    margin-bottom: 20px;
-    box-shadow: 0 4px 12px rgba(4, 106, 56, 0.2);
-    border: 2px solid #D4AF37;
-}
-.national-day-title {
-    font-size: 22px;
-    font-weight: 800;
-    color: #FFFFFF;
-    margin-bottom: 4px;
-}
-.national-day-sub {
-    font-size: 14px;
-    color: #F3F4F6;
-    font-weight: 600;
-}
-.status-badge-ok {
-    background-color: #DCFCE7;
-    color: #15803D;
-    padding: 6px 12px;
-    border-radius: 20px;
-    font-weight: 700;
-    font-size: 13px;
-    display: inline-block;
-}
-.status-badge-off {
-    background-color: #FEE2E2;
-    color: #B91C1C;
-    padding: 6px 12px;
-    border-radius: 20px;
-    font-weight: 700;
-    font-size: 13px;
-    display: inline-block;
-}
-.student-card {
-    background: white;
-    padding: 12px 16px;
-    border-radius: 8px;
-    border-right: 4px solid #1E3C72;
-    margin-bottom: 8px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-}
-</style>
-""", unsafe_allow_html=True)
-
-/* حاوية التقرير القابل للطباعة على الشاشة وفي أوراق A4 */
-.report-paper {
-    background-color: #ffffff;
-    border: 1px solid #e0e0e0;
-    border-radius: 10px;
-    padding: 25px;
-    margin-top: 15px;
-    margin-bottom: 25px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-}
-
-.report-header-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-bottom: 15px;
-    border-bottom: 2px solid #006C35;
-    padding-bottom: 10px;
-}
-.report-header-table td {
-    border: none !important;
-    padding: 4px 8px !important;
-    vertical-align: middle;
-}
-
-/* جداول التقارير المطبوعة */
-table.printable-table {
-    width: 100% !important;
-    border-collapse: collapse !important;
-    margin-top: 10px !important;
-    font-size: 13px !important;
     direction: rtl !important;
+    text-align: right !important;
+    background-color: #f8fafc;
 }
-table.printable-table th {
-    background-color: #006C35 !important;
-    color: #ffffff !important;
-    padding: 10px 8px !important;
+
+/* إصلاح ارتفاء الأسطر لمنع تداخل النصوص كلياً */
+p, span, label, div, h1, h2, h3, h4, h5, h6 {
+    font-family: 'Cairo', sans-serif !important;
+    line-height: 1.8 !important;
+}
+
+/* حل تداخل الأيقونات والنصوص في القوائم المنسدلة st.expander */
+details summary, [data-testid="stExpander"] summary {
+    padding-right: 55px !important;
+    padding-left: 15px !important;
+    direction: rtl !important;
+    text-align: right !important;
+    line-height: 1.8 !important;
+    position: relative !important;
+}
+
+details summary p, [data-testid="stExpander"] summary p {
+    margin: 0 !important;
+    font-size: 14px !important;
+    font-weight: 600 !important;
+    color: #1e293b !important;
+    line-height: 1.8 !important;
+}
+
+[data-testid="stExpander"] summary svg, 
+[data-testid="stExpander"] summary span[data-testid="stExpanderToggleIcon"] {
+    position: absolute !important;
+    right: 15px !important;
+    top: 50% !important;
+    transform: translateY(-50%) !important;
+}
+
+div[data-testid="stExpander"] div[data-testid="stMarkdownContainer"] {
+    direction: rtl !important;
+    text-align: right !important;
+    line-height: 1.8 !important;
+}
+
+/* ضبط عناصر المدخلات والقوائم المنسدلة بدون تداخل */
+[data-testid="stSelectbox"] label p, [data-testid="stNumberInput"] label p {
+    font-weight: 700 !important;
+    color: #1e293b !important;
+    margin-bottom: 4px !important;
+}
+
+[data-testid="stSelectbox"] div[data-baseweb="select"] {
+    direction: rtl !important;
+    text-align: right !important;
+}
+
+[data-testid="stNumberInput"] input {
     text-align: center !important;
     font-weight: bold !important;
-    border: 1px solid #006C35 !important;
 }
-table.printable-table td {
-    border: 1px solid #d1d5db !important;
-    padding: 8px 6px !important;
-    text-align: center !important;
-    color: #1f2937 !important;
-    vertical-align: middle !important;
+
+/* ضبط مربع الخيار Checkbox و Radio دون تداخل */
+[data-testid="stCheckbox"] label, [data-testid="stRadio"] label {
+    display: flex !important;
+    align-items: center !important;
+    gap: 10px !important;
+    direction: rtl !important;
 }
-table.printable-table tr:nth-child(even) {
-    background-color: #f8fafc !important;
+
+/* تحسين الميتريكس والبطاقات */
+[data-testid="stMetricValue"] {
+    font-size: 1.8rem !important;
+    font-weight: 800 !important;
+    line-height: 1.4 !important;
+    color: #1f4e78 !important;
+}
+[data-testid="stMetricLabel"] {
+    font-size: 0.95rem !important;
+    font-weight: 600 !important;
+    line-height: 1.4 !important;
+    color: #495057 !important;
+}
+
+/* شارات حالة الاتصال */
+.status-badge-ok {
+    background-color: #d4edda;
+    color: #155724;
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: bold;
+    text-align: center;
+    border: 1px solid #c3e6cb;
+}
+.status-badge-off {
+    background-color: #f8d7da;
+    color: #721c24;
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: bold;
+    text-align: center;
+    border: 1px solid #f5c6cb;
 }
 
 /* قواعد الطباعة الشاملة عند الضغط على زر الطباعة @media print */
