@@ -93,6 +93,22 @@ def fetch_student_phones_db():
     except Exception:
         return {}
 
+def update_student_phone_db(student_id, new_phone):
+    sb = get_supabase()
+    if sb is None:
+        return False
+    try:
+        sb.table("thaghr_students_info").upsert({
+            "student_id": str(student_id),
+            "phone": str(new_phone).strip()
+        }).execute()
+        return True
+    except Exception as ex:
+        st.error(f"خطأ في تحديث رقم الجوال: {ex}")
+        return False
+    finally:
+        st.cache_data.clear()
+
 ### =========================================================
 ### 1. دالة زر/أيقونة الطباعة المباشرة (Print Button Component)
 ### =========================================================
@@ -122,12 +138,10 @@ def print_button(label="🖨️ طباعة التقرير", button_id="print_btn
     """
     components.html(js_code, height=50)
 
-
 def render_clean_html(html_content):
-    """تنظيف كود HTML من أي مسافات بادئة لمنع ظهوره كأكواد في streamlit"""
+    """تنظيف كود HTML من أي مسافات بادئة لمنع ظهوره كأكواد في Streamlit"""
     lines = [line.strip() for line in html_content.splitlines() if line.strip()]
     st.markdown("".join(lines), unsafe_allow_html=True)
-
 
 ### =========================================================
 ### 2. خدمات WhatsApp Direct API و Mora SMS
@@ -249,7 +263,7 @@ def generate_parent_message(student_name, score, is_absent=False):
         )
 
 ### =========================================================
-### 3. قاعدة بيانات الطلاب الثابتة
+### 3. قاعدة بيانات الطلاب الكاملة (الأول والثاني والثالث المتوسط)
 ### =========================================================
 STUDENTS_DB_GRADES = {
     "الأول المتوسط": {
@@ -303,11 +317,142 @@ STUDENTS_DB_GRADES = {
         1: [
             {"id": "1163760935", "name": "احمد سامي بن احمد العمران", "grade": "الثاني المتوسط", "class": 1, "phone": "966551501503"},
             {"id": "1153756612", "name": "الوليد عبدالله بن ابراهيم المبدل", "grade": "الثاني المتوسط", "class": 1, "phone": "966505241627"},
+            {"id": "1164269209", "name": "ذياب بن محمد بن ذياب بن محمد ال مربط القحطاني", "grade": "الثاني المتوسط", "class": 1, "phone": "966561169999"},
             {"id": "1163187972", "name": "راكان سالم بن محمد بن مسفر القحطاني", "grade": "الثاني المتوسط", "class": 1, "phone": "966556609291"},
             {"id": "1171617069", "name": "سعود خالد عبدالله الحمد", "grade": "الثاني المتوسط", "class": 1, "phone": "966555242944"},
             {"id": "1163458878", "name": "سعود مشعل بن ابراهيم الشثري", "grade": "الثاني المتوسط", "class": 1, "phone": "966598887996"},
             {"id": "1167623758", "name": "سلطان عبدالله حسن القحطاني", "grade": "الثاني المتوسط", "class": 1, "phone": "966563484825"},
-            {"id": "1164769430", "name": "عبدالرحمن حمد بن محمد العريفي", "grade": "الثاني المتوسط", "class": 1, "phone": "966555556856"}
+            {"id": "1164769430", "name": "عبدالرحمن حمد بن محمد العريفي", "grade": "الثاني المتوسط", "class": 1, "phone": "966555556856"},
+            {"id": "1167893740", "name": "عبدالرحمن ربيع جابر خبراني", "grade": "الثاني المتوسط", "class": 1, "phone": "966535924655"},
+            {"id": "1159740032", "name": "عبدالعزيز سعود بن فهد العتيبي", "grade": "الثاني المتوسط", "class": 1, "phone": "966544155592"},
+            {"id": "1164747436", "name": "عبدالمجيد بن محمد بن مسعود ال عايض القحطاني", "grade": "الثاني المتوسط", "class": 1, "phone": "966555275591"},
+            {"id": "1160901128", "name": "فيصل بن عبدالله بن سعود بن عبدالعزيز الجميعة", "grade": "الثاني المتوسط", "class": 1, "phone": "966554949948"},
+            {"id": "1162168627", "name": "مبارك صالح مبارك هليل", "grade": "الثاني المتوسط", "class": 1, "phone": "966553663819"},
+            {"id": "1163212978", "name": "محمد بن عبدالله بن حمد بن ناصر بن عمران", "grade": "الثاني المتوسط", "class": 1, "phone": "966544779170"},
+            {"id": "1161858301", "name": "محمد عبدالمحسن ناصر الحزام", "grade": "الثاني المتوسط", "class": 1, "phone": "966505264075"},
+            {"id": "1175902442", "name": "محمد فايز عبدالرحمن بن يوسف", "grade": "الثاني المتوسط", "class": 1, "phone": "966505482728"},
+            {"id": "1165686179", "name": "مشاري سلطان سالم الشمراني", "grade": "الثاني المتوسط", "class": 1, "phone": "966553908888"},
+            {"id": "1166040053", "name": "معاذ عبدالله سعود العريفي", "grade": "الثاني المتوسط", "class": 1, "phone": "966505473192"},
+            {"id": "1167081981", "name": "ناصر حسين محمد ال جبران", "grade": "الثاني المتوسط", "class": 1, "phone": "966550004952"},
+            {"id": "1171868639", "name": "وائل بن عبدالله بن عامر علي ال عبيد الغامدي", "grade": "الثاني المتوسط", "class": 1, "phone": "966548888663"},
+            {"id": "1163191222", "name": "يزيد بن طارق بن علي الحديثي", "grade": "الثاني المتوسط", "class": 1, "phone": "966554084040"}
+        ],
+        2: [
+            {"id": "1166753291", "name": "ابراهيم بن مبارك بن راشد بن عبدالرحمن السبعان آل موينع", "grade": "الثاني المتوسط", "class": 2, "phone": "966555212896"},
+            {"id": "1163613795", "name": "ابراهيم ياسر ابراهيم الحلوي", "grade": "الثاني المتوسط", "class": 2, "phone": "966502220990"},
+            {"id": "1167148251", "name": "حامد بن محمد بن حامد شباط", "grade": "الثاني المتوسط", "class": 2, "phone": "966595001616"},
+            {"id": "1164599977", "name": "حسام حسن محمد الشهري", "grade": "الثاني المتوسط", "class": 2, "phone": "966557775278"},
+            {"id": "1169057351", "name": "خالد تركي عايض القحطاني", "grade": "الثاني المتوسط", "class": 2, "phone": "966536201378"},
+            {"id": "1164120600", "name": "خالد داود بن عابد الحارثي", "grade": "الثاني المتوسط", "class": 2, "phone": "966501076244"},
+            {"id": "1165839455", "name": "سطام عبدالعزيز عبدالله العريفي", "grade": "الثاني المتوسط", "class": 2, "phone": "966599791658"},
+            {"id": "1163778960", "name": "سعود سلطان بن هليل العتيبي", "grade": "الثاني المتوسط", "class": 2, "phone": "966554820082"},
+            {"id": "1166582989", "name": "طلال محمد منير المهدرس", "grade": "الثاني المتوسط", "class": 2, "phone": "966531167666"},
+            {"id": "1165143783", "name": "عبدالكريم مساعد عبدالعزيز الهزاع", "grade": "الثاني المتوسط", "class": 2, "phone": "966503210252"},
+            {"id": "1164277830", "name": "عبداللطيف ابراهيم محمد الطمرة", "grade": "الثاني المتوسط", "class": 2, "phone": "966505404365"},
+            {"id": "1165495258", "name": "عبدالله سامي سعد الحوشاني", "grade": "الثاني المتوسط", "class": 2, "phone": "966555219086"},
+            {"id": "013609088", "name": "علي احمد علي عقيل", "grade": "الثاني المتوسط", "class": 2, "phone": "966546000184"},
+            {"id": "1164825802", "name": "عمر بن سعد بن هلال الشبانات", "grade": "الثاني المتوسط", "class": 2, "phone": "966505213725"},
+            {"id": "1163537838", "name": "فارس مشعل عبدالله بن موينع", "grade": "الثاني المتوسط", "class": 2, "phone": "966555200719"},
+            {"id": "1162761306", "name": "فهد عيسى محمد العيسى", "grade": "الثاني المتوسط", "class": 2, "phone": "966554499908"},
+            {"id": "1164997858", "name": "مازن خالد دخيل المطيري", "grade": "الثاني المتوسط", "class": 2, "phone": "966501110052"},
+            {"id": "2348937422", "name": "مازن رفعت محمد حاج النيل", "grade": "الثاني المتوسط", "class": 2, "phone": "966501331089"},
+            {"id": "1172720045", "name": "محمد بن علي محسن العثيميني", "grade": "الثاني المتوسط", "class": 2, "phone": "966506256254"},
+            {"id": "1166803245", "name": "نايف بن بندر بن خلفان العلوي", "grade": "الثاني المتوسط", "class": 2, "phone": "966532225560"},
+            {"id": "1165668417", "name": "نواف عبدالعزيز عبدالله المرزوق", "grade": "الثاني المتوسط", "class": 2, "phone": "966501100076"},
+            {"id": "1164387977", "name": "هادي سلطان هادي القحطاني", "grade": "الثاني المتوسط", "class": 2, "phone": "966505936192"},
+            {"id": "1165002153", "name": "يزيد بن حسين بن متعب بن محمد كعكم", "grade": "الثاني المتوسط", "class": 2, "phone": "966550117805"}
+        ],
+        3: [
+            {"id": "1166911709", "name": "ثامر عمر ابراهيم عثمان", "grade": "الثاني المتوسط", "class": 3, "phone": "966538384444"},
+            {"id": "008464815", "name": "جهاد فارس عبدالقادر حناوي", "grade": "الثاني المتوسط", "class": 3, "phone": "966562674178"},
+            {"id": "1164830562", "name": "خالد محمد عبدالكريم الخفاجي", "grade": "الثاني المتوسط", "class": 3, "phone": "966533074601"},
+            {"id": "1188914319", "name": "سعد ابن مسفر بن سعد القحطاني", "grade": "الثاني المتوسط", "class": 3, "phone": "966508057005"},
+            {"id": "1165099498", "name": "سعود بن عبدالله بن سعود السحامي", "grade": "الثاني المتوسط", "class": 3, "phone": "966500650867"},
+            {"id": "1167770468", "name": "سعود ناصر سيف العريفي", "grade": "الثاني المتوسط", "class": 3, "phone": "966505474606"},
+            {"id": "2344500760", "name": "سعيد محمد باوزير", "grade": "الثاني المتوسط", "class": 3, "phone": "966553435135"},
+            {"id": "1164983874", "name": "طلال بن فهد بن عطيه بالحكم الزهراني", "grade": "الثاني المتوسط", "class": 3, "phone": "966567837159"},
+            {"id": "2362260263", "name": "عبدالرحمن احمد جاسم الحمدي", "grade": "الثاني المتوسط", "class": 3, "phone": "966503432054"},
+            {"id": "1167153434", "name": "عبدالعزيز ماجد راشد الزير", "grade": "الثاني المتوسط", "class": 3, "phone": "966500933390"},
+            {"id": "1164512566", "name": "عبدالعزيز وليد ناصر بن سعران", "grade": "الثاني المتوسط", "class": 3, "phone": "966556660555"},
+            {"id": "1167267341", "name": "عبدالله بن بندر بن فهد المسيحل", "grade": "الثاني المتوسط", "class": 3, "phone": "966500155334"},
+            {"id": "2358022958", "name": "عز الدين احمد محمد سعد", "grade": "الثاني المتوسط", "class": 3, "phone": "966561317507"},
+            {"id": "1167515020", "name": "عزام خالد شلهوب بن شلهوب", "grade": "الثاني المتوسط", "class": 3, "phone": "966506404016"},
+            {"id": "1164747014", "name": "عزام فهد احمد صلوي", "grade": "الثاني المتوسط", "class": 3, "phone": "966555796951"},
+            {"id": "4533080448", "name": "عمر وليد ياسين درويش علي", "grade": "الثاني المتوسط", "class": 3, "phone": "966557790508"},
+            {"id": "1163397811", "name": "فارس ابن محمد بن سالم بن نويشي الوهبي الحربي", "grade": "الثاني المتوسط", "class": 3, "phone": "966583228278"},
+            {"id": "1167371093", "name": "يزيد بن حمد بن مترك بن محمد ال مسعود القحطاني", "grade": "الثاني المتوسط", "class": 3, "phone": "966505203795"},
+            {"id": "1167371093", "name": "يوسف عايد عواد البلوي", "grade": "الثاني المتوسط", "class": 3, "phone": "966531066289"}
+        ]
+    },
+    "الثالث المتوسط": {
+        1: [
+            {"id": "1158966166", "name": "أاصيل ناصر بن محمد مذكور", "grade": "الثالث المتوسط", "class": 1, "phone": "966552149044"},
+            {"id": "1162308223", "name": "خالد محمد مسدف معافا", "grade": "الثالث المتوسط", "class": 1, "phone": "966552680201"},
+            {"id": "1161109093", "name": "راكان بن عبدالله بن سالم اليافعي", "grade": "الثالث المتوسط", "class": 1, "phone": "966504234219"},
+            {"id": "1160805899", "name": "زياد احمد بن علي اللحيد", "grade": "الثالث المتوسط", "class": 1, "phone": "966504432362"},
+            {"id": "1160267124", "name": "سطام محمد سعود الدوسري", "grade": "الثالث المتوسط", "class": 1, "phone": "966555260669"},
+            {"id": "1163270869", "name": "سلطان احمد صالح الفنتوخ", "grade": "الثالث المتوسط", "class": 1, "phone": "966555242266"},
+            {"id": "1161085236", "name": "ضاري صالح مهنا العازمي", "grade": "الثالث المتوسط", "class": 1, "phone": "966531111140"},
+            {"id": "1160585624", "name": "عبدالعزيز عبدالله شراز المالكي", "grade": "الثالث المتوسط", "class": 1, "phone": "966556999627"},
+            {"id": "1160050678", "name": "عبدالعزيز عبدالله عايض الاسمري", "grade": "الثالث المتوسط", "class": 1, "phone": "966555992269"},
+            {"id": "1161021314", "name": "عبدالله عبيد عبدالله العتيبي", "grade": "الثالث المتوسط", "class": 1, "phone": "966597882020"},
+            {"id": "1160857700", "name": "عبدالله فهد جلوي سالم الشرعي", "grade": "الثالث المتوسط", "class": 1, "phone": "966555457732"},
+            {"id": "2502333723", "name": "عماد الدين اسلام محمد دراز", "grade": "الثالث المتوسط", "class": 1, "phone": "966556124553"},
+            {"id": "1161418593", "name": "فهد عبدالرحمن فهد العتيبي", "grade": "الثالث المتوسط", "class": 1, "phone": "966552270402"},
+            {"id": "1163074592", "name": "فيصل بن عبدالمحسن بن عايض العصيمي العتيبي", "grade": "الثالث المتوسط", "class": 1, "phone": "966505552320"},
+            {"id": "1171918236", "name": "مازن خالد عبدربه الزهراني", "grade": "الثالث المتوسط", "class": 1, "phone": "966540707365"},
+            {"id": "1158815876", "name": "محمد سلطان عبدالعزيز العيد", "grade": "الثالث المتوسط", "class": 1, "phone": "966503167770"},
+            {"id": "1166075653", "name": "محمد مقعد ساير العتيبي", "grade": "الثالث المتوسط", "class": 1, "phone": "966536655992"},
+            {"id": "1160693949", "name": "مشاري ابراهيم عبداللطيف المغري", "grade": "الثالث المتوسط", "class": 1, "phone": "966542744245"},
+            {"id": "1160803878", "name": "مشاري علي موسى عقيلي", "grade": "الثالث المتوسط", "class": 1, "phone": "966502259722"},
+            {"id": "1161661846", "name": "مهند عبدالله فهد الزكري", "grade": "الثالث المتوسط", "class": 1, "phone": "966558794720"},
+            {"id": "1159404795", "name": "نواف وليد حمد الشعالان", "grade": "الثالث المتوسط", "class": 1, "phone": "966555798074"},
+            {"id": "1168385894", "name": "يوسف نايف مقعد العتيبي", "grade": "الثالث المتوسط", "class": 1, "phone": "966505290037"}
+        ],
+        2: [
+            {"id": "1156933093", "name": "تركي عبدالعزيز عبدالله المرزوق", "grade": "الثالث المتوسط", "class": 2, "phone": "966501100076"},
+            {"id": "1160223317", "name": "تركي عثمان عبدالعزيز العثمان", "grade": "الثالث المتوسط", "class": 2, "phone": "966505226153"},
+            {"id": "1159683497", "name": "راشد احمد فهد ال سعيد", "grade": "الثالث المتوسط", "class": 2, "phone": "966555992829"},
+            {"id": "2310646332", "name": "راكان ابراهيم محمد ديوان", "grade": "الثالث المتوسط", "class": 2, "phone": "966500030732"},
+            {"id": "1161397599", "name": "ريان ناصر عبدالرحمن المرشود", "grade": "الثالث المتوسط", "class": 2, "phone": "966550666662"},
+            {"id": "1163112129", "name": "صالح بن ممدوح بن صالح بن خالد الجويعي", "grade": "الثالث المتوسط", "class": 2, "phone": "966549887719"},
+            {"id": "2508581135", "name": "عبد الرحمن محمد صلاح السيد بدر الدين", "grade": "الثالث المتوسط", "class": 2, "phone": "966507652707"},
+            {"id": "1162188872", "name": "عبدالعزيز تركي عبدالعزيز اللهيم", "grade": "الثالث المتوسط", "class": 2, "phone": "966505256806"},
+            {"id": "1161340763", "name": "عبدالعزيز عبدالمحسن فهد بن بديع", "grade": "الثالث المتوسط", "class": 2, "phone": "966554457163"},
+            {"id": "1171845140", "name": "عبدالله متعب بن عبدالرحمن الجبرين", "grade": "الثالث المتوسط", "class": 2, "phone": "966559898559"},
+            {"id": "1159200318", "name": "عبدالمحسن طارق بن عبدالرحمن العروان", "grade": "الثالث المتوسط", "class": 2, "phone": "966506291294"},
+            {"id": "1162454266", "name": "عمر فهد محمد السقامي", "grade": "الثالث المتوسط", "class": 2, "phone": "966564234552"},
+            {"id": "1165152107", "name": "فيصل محمد صالح الفنتوخ", "grade": "الثالث المتوسط", "class": 2, "phone": "966556488802"},
+            {"id": "1162325722", "name": "ماجد فهد عبدالعزيز الكثيري", "grade": "الثالث المتوسط", "class": 2, "phone": "966557609015"},
+            {"id": "1162461857", "name": "محمد خالد محمد بن مشرف", "grade": "الثالث المتوسط", "class": 2, "phone": "966551777559"},
+            {"id": "1161288897", "name": "محمد سعد بن محمد العيشان", "grade": "الثالث المتوسط", "class": 2, "phone": "966504217660"},
+            {"id": "1156334813", "name": "محمد عبدالعزيز محمد الخالدي", "grade": "الثالث المتوسط", "class": 2, "phone": "966500091387"},
+            {"id": "1162044851", "name": "مهند ماجد علي كعبي", "grade": "الثالث المتوسط", "class": 2, "phone": "966533313738"},
+            {"id": "1158021137", "name": "ناصر محمد عبدالله الزريعي", "grade": "الثالث المتوسط", "class": 2, "phone": "966505231121"},
+            {"id": "1161363443", "name": "نواف سعد بن علي القاسم", "grade": "الثالث المتوسط", "class": 2, "phone": "966504200199"},
+            {"id": "1162274086", "name": "ياسر تركي اسماعيل مسملي", "grade": "الثالث المتوسط", "class": 2, "phone": "966504261855"}
+        ],
+        3: [
+            {"id": "1163525544", "name": "ثامر وليد بن عبدالعزيز الطليحي", "grade": "الثالث المتوسط", "class": 3, "phone": "966504437710"},
+            {"id": "1160712996", "name": "خالد بن عبدالرؤوف بن عبدالله الشنيبر", "grade": "الثالث المتوسط", "class": 3, "phone": "966504173163"},
+            {"id": "1162560054", "name": "خالد عبدالله خالد الخالدي", "grade": "الثالث المتوسط", "class": 3, "phone": "966558890881"},
+            {"id": "1174188647", "name": "خالد محمد بن عبدالله ال درعان", "grade": "الثالث المتوسط", "class": 3, "phone": "966505556029"},
+            {"id": "1159155223", "name": "راشد سعيد راشد عبدالسلام", "grade": "الثالث المتوسط", "class": 3, "phone": "966533177877"},
+            {"id": "1174226389", "name": "راشد صالح بن عبدالعزيز الحلوان", "grade": "الثالث المتوسط", "class": 3, "phone": "966551112126"},
+            {"id": "1167756897", "name": "رواد محمد ابراهيم الخليل", "grade": "الثالث المتوسط", "class": 3, "phone": "966502555411"},
+            {"id": "1159394046", "name": "صالح بن محمد بن صالح الميموني المطيري", "grade": "الثالث المتوسط", "class": 3, "phone": "966555097811"},
+            {"id": "1158551372", "name": "عبدالرحمن بدر عبدالرحمن الطريقي", "grade": "الثالث المتوسط", "class": 3, "phone": "966507004114"},
+            {"id": "1195815558", "name": "عبدالرحمن خالد محمد سعيد", "grade": "الثالث المتوسط", "class": 3, "phone": "966504411393"},
+            {"id": "1158561843", "name": "عبدالله تركي عبدالله الأحمد", "grade": "الثالث المتوسط", "class": 3, "phone": "966542800700"},
+            {"id": "1159977451", "name": "عبدالله عبدالرحمن عبدالله النجراني", "grade": "الثالث المتوسط", "class": 3, "phone": "966546416395"},
+            {"id": "1162387458", "name": "علي بن خالد بن علي العجيري", "grade": "الثالث المتوسط", "class": 3, "phone": "966505199500"},
+            {"id": "1158128270", "name": "علي عبدالله علي ال حمود", "grade": "الثالث المتوسط", "class": 3, "phone": "966545555161"},
+            {"id": "1161333677", "name": "فارس وليد بن عبدالله الحوطي", "grade": "الثالث المتوسط", "class": 3, "phone": "966552805550"},
+            {"id": "1158198604", "name": "فهد بن خالد بن فهد بن عبدالعزيز الزيد", "grade": "الثالث المتوسط", "class": 3, "phone": "966555198633"},
+            {"id": "1159551264", "name": "فيصل عبدالرحمن عزيز القحطاني", "grade": "الثالث المتوسط", "class": 3, "phone": "966556444082"},
+            {"id": "1186515613", "name": "متعب مطر جمعان الدوسري", "grade": "الثالث المتوسط", "class": 3, "phone": "966530545913"},
+            {"id": "1159852746", "name": "نواف فهد بن ناصر القحطاني", "grade": "الثالث المتوسط", "class": 3, "phone": "966556557210"},
+            {"id": "1163072392", "name": "يوسف عبدالله عوض العتيبي", "grade": "الثالث المتوسط", "class": 3, "phone": "966506371377"}
         ]
     }
 }
@@ -322,49 +467,69 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# حل مشكلة تداخل النصوص (Text Overlap Fix) وتصميم التقارير للطباعة (Print CSS)
+# حل شامل لمشكلة تداخل النصوص والأيقونات في Streamlit والتصميم للطباعة
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap');
 
-/* تنسيقات العامة لمنع تداخل النصوص وارتفاع الأسطر */
-html, body, [class*="css"], div, span, p, label, button, input, select {
+html, body, [class*="css"], div, span, button, input, select {
     font-family: 'Cairo', sans-serif !important;
+    direction: rtl;
+    text-align: right;
+}
+
+/* إصلاح ارتفاع الأسطر لمنع تداخل النصوص */
+p, span, label, h1, h2, h3, h4, h5, h6 {
+    line-height: 1.8 !important;
+}
+
+/* حل مشكلة تداخل الأيقونات مع النصوص داخل st.expander */
+details summary, [data-testid="stExpander"] summary {
+    padding-right: 50px !important;
+    padding-left: 15px !important;
+    direction: rtl !important;
+    text-align: right !important;
+    line-height: 1.8 !important;
+    position: relative !important;
+}
+
+details summary p, [data-testid="stExpander"] summary p {
+    margin: 0 !important;
+    font-size: 14px !important;
+    font-weight: 600 !important;
+    color: #1e293b !important;
+    line-height: 1.8 !important;
+}
+
+[data-testid="stExpander"] summary svg, 
+[data-testid="stExpander"] summary span[data-testid="stExpanderToggleIcon"] {
+    position: absolute !important;
+    right: 12px !important;
+    top: 50% !important;
+    transform: translateY(-50%) !important;
+}
+
+div[data-testid="stExpander"] div[data-testid="stMarkdownContainer"] {
     direction: rtl !important;
     text-align: right !important;
     line-height: 1.8 !important;
 }
 
-/* ضبط العناوين والبطاقات لمنع التداخل */
-h1, h2, h3, h4, h5, h6 {
-    font-family: 'Cairo', sans-serif !important;
-    line-height: 1.6 !important;
-    margin-bottom: 8px !important;
-    padding-top: 4px !important;
-}
-
-/* تنسيق بطاقات الإحصائيات Metrics */
-[data-testid="stMetric"] {
-    background-color: #f8fafc !important;
-    border: 1px solid #e2e8f0 !important;
-    padding: 12px 16px !important;
-    border-radius: 10px !important;
-    min-height: 90px !important;
-}
+/* تحسين الميتريكس والبطاقات */
 [data-testid="stMetricValue"] {
-    font-size: 1.4rem !important;
+    font-size: 1.8rem !important;
     font-weight: 800 !important;
-    line-height: 1.5 !important;
-    color: #1e293b !important;
-    margin-top: 4px !important;
+    line-height: 1.4 !important;
+    color: #1f4e78 !important;
 }
 [data-testid="stMetricLabel"] {
     font-size: 0.95rem !important;
-    font-weight: 700 !important;
-    line-height: 1.5 !important;
-    color: #475569 !important;
+    font-weight: 600 !important;
+    line-height: 1.4 !important;
+    color: #495057 !important;
 }
 
+/* شارات حالة الاتصال */
 .status-badge-ok {
     background-color: #d4edda;
     color: #155724;
@@ -386,57 +551,51 @@ h1, h2, h3, h4, h5, h6 {
     border: 1px solid #f5c6cb;
 }
 
-/* حاوية التقرير المطبوع */
+/* حاوية التقرير القابل للطباعة على الشاشة وفي أوراق A4 */
 .report-paper {
-    background-color: #ffffff !important;
-    border: 1px solid #cbd5e1 !important;
-    border-radius: 12px !important;
-    padding: 24px !important;
-    margin: 20px 0 !important;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.06) !important;
+    background-color: #ffffff;
+    border: 1px solid #e0e0e0;
+    border-radius: 10px;
+    padding: 25px;
+    margin-top: 15px;
+    margin-bottom: 25px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
 }
 
-table.report-header-table {
-    width: 100% !important;
-    border-collapse: collapse !important;
-    margin-bottom: 20px !important;
-    border-bottom: 2px solid #1f4e78 !important;
-    padding-bottom: 12px !important;
+.report-header-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 15px;
+    border-bottom: 2px solid #1f4e78;
+    padding-bottom: 10px;
 }
-table.report-header-table td {
+.report-header-table td {
     border: none !important;
-    padding: 6px 10px !important;
-    vertical-align: middle !important;
-    line-height: 1.6 !important;
-    font-size: 13px !important;
+    padding: 4px 8px !important;
+    vertical-align: middle;
 }
 
-/* جداول التقارير المطبوعة - تمنع تداخل النص بالجداول */
+/* جداول التقارير المطبوعة */
 table.printable-table {
     width: 100% !important;
     border-collapse: collapse !important;
-    margin-top: 15px !important;
+    margin-top: 10px !important;
     font-size: 13px !important;
     direction: rtl !important;
 }
 table.printable-table th {
     background-color: #1f4e78 !important;
     color: #ffffff !important;
-    padding: 12px 8px !important;
-    text-align: center !important;
-    font-weight: 700 !important;
-    border: 1px solid #1f4e78 !important;
-    line-height: 1.5 !important;
-    vertical-align: middle !important;
-}
-table.printable-table td {
-    border: 1px solid #cbd5e1 !important;
     padding: 10px 8px !important;
     text-align: center !important;
-    color: #0f172a !important;
-    line-height: 1.6 !important;
-    vertical-align: middle !important;
-    font-size: 13px !important;
+    font-weight: bold !important;
+    border: 1px solid #1f4e78 !important;
+}
+table.printable-table td {
+    border: 1px solid #d1d5db !important;
+    padding: 8px 6px !important;
+    text-align: center !important;
+    color: #1f2937 !important;
 }
 table.printable-table tr:nth-child(even) {
     background-color: #f8fafc !important;
@@ -455,7 +614,7 @@ table.printable-table tr:nth-child(even) {
     
     @page {
         size: A4 portrait;
-        margin: 12mm 10mm 12mm 10mm;
+        margin: 10mm 12mm 10mm 12mm;
     }
     
     body, .stApp, .main .block-container {
@@ -476,13 +635,13 @@ table.printable-table tr:nth-child(even) {
     table.printable-table th {
         background-color: #1f4e78 !important;
         color: white !important;
-        -webkit-print-color-adjust: exact !important;
-        print-color-adjust: exact !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
     }
     table.printable-table tr:nth-child(even) {
         background-color: #f1f5f9 !important;
-        -webkit-print-color-adjust: exact !important;
-        print-color-adjust: exact !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
     }
 }
 </style>
@@ -543,7 +702,7 @@ if page == "📝 صفحة الرصد":
     db_grades_list = fetch_all_grades_db(selected_term, selected_week)
     db_grades_map = {str(g['student_id']): g for g in db_grades_list}
 
-    st.markdown("##### 📋 قائمة الطلاب وتعديل الدرجات:")
+    st.markdown(f"##### 📋 قائمة طلاب {selected_grade} - فصل ({selected_class}) | العدد: {len(students_list)} طالب")
     
     form_grades = []
     
@@ -618,7 +777,6 @@ elif page == "🏫 إدارة المدرسة وتقارير أولياء الأ�
                 sc = rec.get("score", None)
                 is_abs = rec.get("is_absent", 0)
 
-                # إذا لم تكن هناك درجات محفوظة في الداتابيز، نضع الدرجة الافتراضية 100 لتفادي الحقول الفارغة
                 final_score = float(sc) if (sc is not None) else 100.0
 
                 msg = generate_parent_message(s_item["name"], final_score, is_abs == 1)
@@ -662,9 +820,8 @@ elif page == "🏫 إدارة المدرسة وتقارير أولياء الأ�
     m3.metric("🟢 76% - 100%", f"{len(cat_green)} طالب")
     m4.metric("⚪ الغياب", f"{len(cat_gray)} طالب")
 
-    # توليد التقرير الشامل بصيغة HTML جاهزة وموثقة للطباعة والعرض (بدون Canvas)
     today_str = datetime.now().strftime("%Y/%m/%d")
-    
+
     rows_html = ""
     for idx, s in enumerate(all_students_flat):
         status_txt = "غائب ⚪" if s['is_absent'] == 1 else ("متفوق 🟢" if s['score'] >= 76 else ("جيد 🔵" if s['score'] >= 50 else "يحتاج متابعة 🔴"))
@@ -738,8 +895,8 @@ elif page == "🏫 إدارة المدرسة وتقارير أولياء الأ�
     # ---------------------------------------------------------
     # 2. قسم طباعة تقرير الصف الدراسي المحدد
     # ---------------------------------------------------------
-    st.markdown("### 🏫 تقرير الصف المالي والدرجات (طباعة حسب الصف)")
-    
+    st.markdown("### 🏫 تقرير الصف وإتقان الدرجات (طباعة حسب الصف)")
+
     col_g1, col_g2, col_g3 = st.columns([2, 2, 2])
 
     with col_g1:
