@@ -720,7 +720,7 @@ if page == "📝 صفحة الرصد":
 # =========================================================
 elif page == "🏫 إدارة المدرسة وتقارير أولياء الأمور":
     st.subheader("🏫 إدارة المدرسة وإرسال وتقارير أولياء الأمور")
-    
+
     col_w1, col_w2 = st.columns(2)
     with col_w1:
         weeks = [f"الأسبوع {i}" for i in range(1, 19)]
@@ -817,32 +817,21 @@ elif page == "🏫 إدارة المدرسة وتقارير أولياء الأ�
                             succ, fail, details = send_bulk_messages(cat_list, channel="sms", mora_creds=m_creds)
                             st.success(f"✅ اكتملت عملية الإرسال! النجاح: {succ} | الفشل: {fail}")
 
-            st.markdown("<div style='margin-bottom: 15px;'></div>", unsafe_allow_html=True)
+            st.markdown("---")
 
-            for idx_st, item in enumerate(cat_list):
+            for item in cat_list:
                 wa_manual_url = create_whatsapp_web_url(item['phone'], item['message'])
-                score_str = f"{item['score']}%" if item['is_absent'] == 0 else "غائب ⚪"
-                
-                expander_label = f"👤 {item['name']} | {item['grade']} (فصل {item['class']})"
-                with st.expander(expander_label):
-                    st.markdown(f'''
-                    <div style="background-color: #ffffff; border-radius: 10px; padding: 16px; border: 1px solid #e2e8f0; margin-bottom: 14px;">
-                        <div style="display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; font-size: 13px;">
-                            <span style="background: #f1f5f9; color: #334155; padding: 5px 12px; border-radius: 6px; font-weight: 700; border: 1px solid #cbd5e1;">🆔 الهوية: {item['id']}</span>
-                            <span style="background: #e0f2fe; color: #0369a1; padding: 5px 12px; border-radius: 6px; font-weight: 700; border: 1px solid #bae6fd;">📊 الدرجة: {score_str}</span>
-                            <span style="background: #fef3c7; color: #92400e; padding: 5px 12px; border-radius: 6px; font-weight: 700; border: 1px solid #fde68a;">📱 الجوال: {item['phone']}</span>
-                        </div>
-                        <div style="background-color: #f8fafc; border-right: 4px solid #005A2B; padding: 14px 18px; border-radius: 8px; color: #0f172a; font-size: 14px; line-height: 1.8; margin-bottom: 16px; word-wrap: break-word;">
-                            <b style="color: #005A2B;">💬 نص الرسالة الموجهة لولي الأمر:</b><br/>
-                            {item['message']}
-                        </div>
-                    </div>
-                    ''', unsafe_allow_html=True)
+                with st.expander(f"👤 {item['name']} ({item['grade']} - فصل {item['class']}) | جوال ولي الأمر: {item['phone']}"):
+                    st.write(f"**رقم الهوية:** {item['id']}")
+                    st.write(f"**النسبة المئوية / الدرجة:** {item['score']}%" if item['is_absent'] == 0 else "**الحالة:** غائب ⚪")
+                    st.info(f"""💬 **نص الرسالة الموجهة:**
+
+{item['message']}""")
                     
-                    btn_col1, btn_col2, btn_col3 = st.columns([1, 1, 1])
+                    btn_col1, btn_col2, btn_col3 = st.columns(3)
                     
                     with btn_col1:
-                        if st.button("💬 إرسال واتساب تلقائي", key=f"wa_dir_{item['id']}_{idx_st}"):
+                        if st.button(f"💬 إرسال واتساب تلقائي (مباشر)", key=f"wa_direct_{item['id']}"):
                             with st.spinner("جاري الإرسال المباشر..."):
                                 ok, resp = send_whatsapp_direct_api(item['phone'], item['message'], wa_instance, wa_token)
                                 if ok:
@@ -853,14 +842,14 @@ elif page == "🏫 إدارة المدرسة وتقارير أولياء الأ�
                     with btn_col2:
                         st.markdown(f'''
                         <a href="{wa_manual_url}" target="_blank" style="text-decoration:none;">
-                            <div style="background-color:#25D366; color:white; padding:8px 12px; border-radius:8px; text-align:center; font-weight:700; font-size:13px; line-height:1.5; display:block; border: 1px solid #1da851;">
-                                🌐 فتح بالواتساب
+                            <div style="background-color:#25D366; color:white; padding:8px 12px; border-radius:6px; text-align:center; font-weight:bold; font-size:13px; margin-top:2px; display:block;">
+                                🌐 فتح في تطبيق الواتساب
                             </div>
                         </a>
                         ''', unsafe_allow_html=True)
 
                     with btn_col3:
-                        if st.button("📱 إرسال SMS (Mora)", key=f"sms_dir_{item['id']}_{idx_st}"):
+                        if st.button(f"📱 إرسال SMS (Mora)", key=f"single_sms_{item['id']}"):
                             with st.spinner("جاري الإرسال..."):
                                 status, msg_resp = send_mora_sms(
                                     item['phone'], item['message'], username=mora_user, password=mora_pass, sender_name=mora_sender, otp_code=mora_otp
