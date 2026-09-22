@@ -636,6 +636,57 @@ div[data-testid="stExpander"] div[data-testid="stMarkdownContainer"] {
     border: 1px solid #f5c6cb;
 }
 
+/* حاوية التقرير القابل للطباعة على الشاشة وفي أوراق A4 */
+.report-paper {
+    background-color: #ffffff;
+    border: 1px solid #e0e0e0;
+    border-radius: 10px;
+    padding: 25px;
+    margin-top: 15px;
+    margin-bottom: 25px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+}
+
+.report-header-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 15px;
+    border-bottom: 2px solid #006C35;
+    padding-bottom: 10px;
+}
+.report-header-table td {
+    border: none !important;
+    padding: 4px 8px !important;
+    vertical-align: middle;
+}
+
+/* جداول التقارير المطبوعة */
+table.printable-table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+    margin-top: 10px !important;
+    font-size: 13px !important;
+    direction: rtl !important;
+}
+table.printable-table th {
+    background-color: #006C35 !important;
+    color: #ffffff !important;
+    padding: 10px 8px !important;
+    text-align: center !important;
+    font-weight: bold !important;
+    border: 1px solid #006C35 !important;
+}
+table.printable-table td {
+    border: 1px solid #d1d5db !important;
+    padding: 8px 6px !important;
+    text-align: center !important;
+    color: #1f2937 !important;
+    vertical-align: middle !important;
+}
+table.printable-table tr:nth-child(even) {
+    background-color: #f8fafc !important;
+}
+
 /* قواعد الطباعة الشاملة عند الضغط على زر الطباعة @media print */
 @media print {
     /* إخفاء واجهة Streamlit والمقابض والتنبيهات والتبويبات عند الطباعة */
