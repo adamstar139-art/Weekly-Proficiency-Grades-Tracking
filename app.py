@@ -526,82 +526,62 @@ html, body, .stApp {
     background-color: #f8fafc;
 }
 
-/* إصلاح ارتفاء الأسطر لمنع تداخل النصوص كلياً */
-p, span, label, div, h1, h2, h3, h4, h5, h6 {
-    font-family: 'Cairo', sans-serif !important;
-    line-height: 1.8 !important;
+/* الحفاظ على خط الأيقونات لتجنب تداخل النصوص مثل keyboard_arrow */
+[data-testid="stIcon"], [class*="material-symbols"], [class*="Material"], [class*="icon"], i {
+    font-family: 'Material Symbols Outlined', 'Material Icons' !important;
 }
-
-/* حل تداخل الأيقونات والنصوص في القوائم المنسدلة st.expander */
-details summary, [data-testid="stExpander"] summary {
-    padding-right: 55px !important;
-    padding-left: 15px !important;
-    direction: rtl !important;
-    text-align: right !important;
-    line-height: 1.8 !important;
-    position: relative !important;
+.stApp {
+    background-color: #F8FAFC;
 }
-
-details summary p, [data-testid="stExpander"] summary p {
-    margin: 0 !important;
-    font-size: 14px !important;
-    font-weight: 600 !important;
-    color: #1e293b !important;
-    line-height: 1.8 !important;
+.national-day-banner {
+    background: linear-gradient(135deg, #046A38 0%, #004B23 100%);
+    color: #FFFFFF;
+    padding: 18px;
+    border-radius: 12px;
+    text-align: center;
+    margin-bottom: 20px;
+    box-shadow: 0 4px 12px rgba(4, 106, 56, 0.2);
+    border: 2px solid #D4AF37;
 }
-
-[data-testid="stExpander"] summary svg, 
-[data-testid="stExpander"] summary span[data-testid="stExpanderToggleIcon"] {
-    position: absolute !important;
-    right: 15px !important;
-    top: 50% !important;
-    transform: translateY(-50%) !important;
+.national-day-title {
+    font-size: 22px;
+    font-weight: 800;
+    color: #FFFFFF;
+    margin-bottom: 4px;
 }
-
-div[data-testid="stExpander"] div[data-testid="stMarkdownContainer"] {
-    direction: rtl !important;
-    text-align: right !important;
-    line-height: 1.8 !important;
+.national-day-sub {
+    font-size: 14px;
+    color: #F3F4F6;
+    font-weight: 600;
 }
-
-/* ضبط عناصر المدخلات والقوائم المنسدلة بدون تداخل */
-[data-testid="stSelectbox"] label p, [data-testid="stNumberInput"] label p {
-    font-weight: 700 !important;
-    color: #1e293b !important;
-    margin-bottom: 4px !important;
+.status-badge-ok {
+    background-color: #DCFCE7;
+    color: #15803D;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-weight: 700;
+    font-size: 13px;
+    display: inline-block;
 }
-
-[data-testid="stSelectbox"] div[data-baseweb="select"] {
-    direction: rtl !important;
-    text-align: right !important;
+.status-badge-off {
+    background-color: #FEE2E2;
+    color: #B91C1C;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-weight: 700;
+    font-size: 13px;
+    display: inline-block;
 }
-
-[data-testid="stNumberInput"] input {
-    text-align: center !important;
-    font-weight: bold !important;
+.student-card {
+    background: white;
+    padding: 12px 16px;
+    border-radius: 8px;
+    border-right: 4px solid #1E3C72;
+    margin-bottom: 8px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
 }
-
-/* ضبط مربع الخيار Checkbox و Radio دون تداخل */
-[data-testid="stCheckbox"] label, [data-testid="stRadio"] label {
-    display: flex !important;
-    align-items: center !important;
-    gap: 10px !important;
-    direction: rtl !important;
-}
-
-/* تحسين الميتريكس والبطاقات */
-[data-testid="stMetricValue"] {
-    font-size: 1.8rem !important;
-    font-weight: 800 !important;
-    line-height: 1.4 !important;
-    color: #1f4e78 !important;
-}
-[data-testid="stMetricLabel"] {
-    font-size: 0.95rem !important;
-    font-weight: 600 !important;
-    line-height: 1.4 !important;
-    color: #495057 !important;
-}
+</style>
+""", unsafe_allow_html=True)
 
 /* شارات حالة الاتصال */
 .status-badge-ok {
