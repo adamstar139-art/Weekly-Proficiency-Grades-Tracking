@@ -678,12 +678,12 @@ else:
 st.sidebar.markdown("---")
 st.sidebar.subheader("📱 إعدادات البوابات والرسائل")
 
-with st.sidebar.expander("💬 إعدادات WhatsApp Direct API (إرسال تلقائي بدون فتح التطبيق)"):
+with st.sidebar.expander("🟢 إعدادات WhatsApp Direct API (إرسال تلقائي بدون فتح التطبيق)"):
     wa_instance = st.text_input("Instance ID:", value="", key="wa_inst_inp")
     wa_token = st.text_input("API Token:", value="", type="password", key="wa_tok_inp")
     st.caption("💡 باستخدام هذه الإعدادات، يتم إرسال رسائل الواتساب مباشرة للطلاب في الخلفية فور الضغط على زر الإرسال بنقرة واحدة.")
 
-with st.sidebar.expander("📱 إعدادات Mora SMS"):
+with st.sidebar.expander("📩 إعدادات Mora SMS"):
     mora_user = st.text_input("اسم المستخدم / الرقم:", value="966508634881", key="mora_u")
     mora_pass = st.text_input("كلمة المرور:", value="THA@0508634881", type="password", key="mora_p")
     mora_sender = st.text_input("اسم المرسل المعتمد:", value="THAGHR-S", key="mora_s")
