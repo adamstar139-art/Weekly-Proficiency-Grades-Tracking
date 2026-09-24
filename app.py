@@ -643,6 +643,335 @@ def render_saudi_header():
     </div>
     ''', unsafe_allow_html=True)
 
+
+### =========================================================
+### دالة توليد شهادات المعلمين (شكر وتقدير / حضور دورة)
+### =========================================================
+def generate_teacher_certificate_html(cert_type, teacher_name, course_title="", hours="", date_str="", reason="", subject=""):
+    """
+    توليد شهادة حضور دورة أو شهادة تقدير للمعلمين بتصميم احترافي بالهوية الوطنية
+    """
+    if not date_str:
+        date_str = date.today().strftime("%Y-%m-%d")
+
+    if cert_type == "تقدير":
+        badge_title = "شهادة شكر وتقدير"
+        badge_sub = "CERTIFICATE OF APPRECIATION"
+        main_intro = "تتقدم إدارة متوسطة الثغر النموذجية الأهلية بخالص الشكر والتقدير والامتنان للمعلم القدير:"
+        body_reason = reason if reason else "نظير جهوده المتميزة، وعطائه الدؤوب، وإسهاماته الفاعلة والريادية في إنجاح العملية التعليمية والتربوية بالمدرسة."
+        extra_info = f"المادة / التخصص: <b>{subject}</b>" if subject else ""
+    else: # حضور دورة
+        badge_title = "شهادة حضور دورة تدريبية"
+        badge_sub = "CERTIFICATE OF COURSE ATTENDANCE"
+        main_intro = "تشهد إدارة متوسطة الثغر النموذجية الأهلية بأن المعلم القدير:"
+        body_reason = f"قد أتم بنجاح ومواظبة حضور البرنامج التدريبي بعنوان:<br><div class='course-title'>« {course_title if course_title else 'التطوير المهني والتقنيات الحديثة في التعليم'} »</div> بواقع (<b>{hours if hours else '10'}</b>) ساعات تدريبية، خلال الفترة: {date_str}."
+        extra_info = ""
+
+    html = f"""<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>{badge_title} - {teacher_name}</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&family=Amiri:ital,wght@0,700;1,700&display=swap');
+        
+        @page {{
+            size: A4 landscape;
+            margin: 0;
+        }}
+        
+        body {{
+            font-family: 'Cairo', 'Amiri', serif;
+            direction: rtl;
+            text-align: center;
+            background-color: #f4f6f8;
+            margin: 0;
+            padding: 15px;
+            color: #1e293b;
+            -webkit-print-color-adjust: exact;
+        }}
+        
+        .cert-outer-frame {{
+            width: 980px;
+            height: 650px;
+            margin: 0 auto;
+            background: #ffffff;
+            border: 10px solid #005A2B;
+            border-radius: 16px;
+            padding: 10px;
+            box-sizing: border-box;
+            position: relative;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.12);
+        }}
+        
+        .cert-inner-frame {{
+            width: 100%;
+            height: 100%;
+            border: 3px double #D4AF37;
+            border-radius: 8px;
+            padding: 20px 30px;
+            box-sizing: border-box;
+            background: radial-gradient(circle, rgba(255,255,255,1) 65%, rgba(248,250,252,1) 100%);
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }}
+        
+        /* العلامة المائية الخلفية */
+        .cert-watermark {{
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 130px;
+            color: rgba(0, 90, 43, 0.03);
+            font-weight: 900;
+            white-space: nowrap;
+            pointer-events: none;
+            user-select: none;
+        }}
+
+        /* الترويسة الهوية الوطنية */
+        .header-section {{
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid #D4AF37;
+            padding-bottom: 10px;
+        }}
+        
+        .header-right, .header-left {{
+            font-size: 12px;
+            font-weight: 700;
+            color: #005A2B;
+            line-height: 1.5;
+            text-align: right;
+        }}
+        
+        .header-left {{
+            text-align: left;
+            color: #475569;
+        }}
+        
+        .school-logo-box {{
+            text-align: center;
+        }}
+        
+        .school-title {{
+            font-size: 20px;
+            font-weight: 900;
+            color: #005A2B;
+            letter-spacing: 0.5px;
+        }}
+        
+        .school-subtitle {{
+            font-size: 12px;
+            font-weight: 700;
+            color: #D4AF37;
+            margin-top: 2px;
+        }}
+
+        /* عنوان الشهادة */
+        .cert-title-container {{
+            margin-top: 8px;
+            margin-bottom: 4px;
+        }}
+        
+        .cert-main-title {{
+            font-size: 32px;
+            font-weight: 900;
+            color: #005A2B;
+            margin: 0;
+            padding: 0;
+            letter-spacing: 1px;
+        }}
+        
+        .cert-sub-title {{
+            font-size: 11px;
+            font-weight: 800;
+            color: #D4AF37;
+            letter-spacing: 2px;
+            margin-top: 2px;
+        }}
+
+        /* نص الشهادة الرئيسي */
+        .cert-body {{
+            margin: 10px 0;
+            line-height: 1.8;
+        }}
+        
+        .intro-text {{
+            font-size: 15px;
+            color: #334155;
+            font-weight: 600;
+        }}
+        
+        .teacher-name {{
+            font-size: 28px;
+            font-weight: 900;
+            color: #005A2B;
+            margin: 6px 0;
+            padding: 4px 24px;
+            display: inline-block;
+            border-bottom: 2px dashed #D4AF37;
+            font-family: 'Cairo', sans-serif;
+        }}
+        
+        .reason-text {{
+            font-size: 15px;
+            color: #1e293b;
+            font-weight: 600;
+            max-width: 800px;
+            margin: 8px auto;
+            line-height: 1.8;
+        }}
+        
+        .course-title {{
+            font-size: 18px;
+            font-weight: 800;
+            color: #D4AF37;
+            margin: 6px 0;
+            display: inline-block;
+            background: #f8fafc;
+            padding: 4px 18px;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+        }}
+        
+        .extra-info {{
+            font-size: 13px;
+            color: #64748b;
+            margin-top: 4px;
+        }}
+
+        /* قسم التوقيعات والختم المعتمد في الأسفل */
+        .signatures-section {{
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid #e2e8f0;
+        }}
+        
+        .sig-box {{
+            flex: 1;
+            text-align: center;
+        }}
+        
+        .sig-role {{
+            font-size: 13px;
+            font-weight: 800;
+            color: #005A2B;
+        }}
+        
+        .sig-name {{
+            font-size: 15px;
+            font-weight: 900;
+            color: #0f172a;
+            margin-top: 4px;
+        }}
+        
+        .stamp-box {{
+            width: 100px;
+            height: 100px;
+            border: 2px dashed #D4AF37;
+            border-radius: 50%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            margin: 0 auto;
+            background: rgba(212, 175, 55, 0.05);
+        }}
+        
+        .stamp-text {{
+            font-size: 10px;
+            font-weight: 800;
+            color: #005A2B;
+            text-align: center;
+        }}
+        
+        .cert-footer-date {{
+            font-size: 10px;
+            color: #94a3b8;
+            font-weight: 600;
+            margin-top: 6px;
+        }}
+    </style>
+</head>
+<body>
+    <div class="cert-outer-frame">
+        <div class="cert-inner-frame">
+            <div class="cert-watermark">مدرسة الثغر</div>
+            
+            <!-- الترويسة الهوية الوطنية -->
+            <div class="header-section">
+                <div class="header-right">
+                    المملكة العربية السعودية<br>
+                    وزارة التعليم<br>
+                    إدارة التعليم بمنطقة الرياض
+                </div>
+                
+                <div class="school-logo-box">
+                    <div style="font-size: 26px; margin-bottom: -4px;">🏫</div>
+                    <div class="school-title">متوسطة الثغر النموذجية الأهلية</div>
+                    <div class="school-subtitle">مكتب التعليم الخاص</div>
+                </div>
+                
+                <div class="header-left">
+                    التاريخ: {date_str}<br>
+                    الرقم المرجعي: THA-CERT-{date.today().strftime("%Y%m%d")}<br>
+                    المرفقات: لا يوجد
+                </div>
+            </div>
+            
+            <!-- عنوان الشهادة -->
+            <div class="cert-title-container">
+                <h1 class="cert-main-title">{badge_title}</h1>
+                <div class="cert-sub-title">{badge_sub}</div>
+            </div>
+            
+            <!-- نص الشهادة -->
+            <div class="cert-body">
+                <div class="intro-text">{main_intro}</div>
+                <div class="teacher-name">{teacher_name}</div>
+                <div class="reason-text">{body_reason}</div>
+                {f'<div class="extra-info">{extra_info}</div>' if extra_info else ''}
+            </div>
+            
+            <!-- التوقيعات والختم -->
+            <div class="signatures-section">
+                <div class="sig-box">
+                    <div class="sig-role">المدير الأكاديمي</div>
+                    <div class="sig-name">د. ياسين البدراوي</div>
+                    <div style="font-size: 10px; color: #94a3b8; margin-top: 8px;">التوقيع: ..........................</div>
+                </div>
+                
+                <div class="sig-box">
+                    <div class="stamp-box">
+                        <div class="stamp-text">🏛️<br>ختم المدرسة<br>المعتمد</div>
+                    </div>
+                </div>
+                
+                <div class="sig-box">
+                    <div class="sig-role">مدير المدرسة</div>
+                    <div class="sig-name">أ. إبراهيم بن موسى التميمي</div>
+                    <div style="font-size: 10px; color: #94a3b8; margin-top: 8px;">التوقيع: ..........................</div>
+                </div>
+            </div>
+            
+            <div class="cert-footer-date">
+                صدرت هذه الشهادة رسمياً من نظام متوسطة الثغر النموذجية الأهلية © {date.today().year}
+            </div>
+        </div>
+    </div>
+</body>
+</html>"""
+    return html
+
+
 def render_signatures_card():
     st.markdown('''
     <div style="background: white; border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px; margin-top: 20px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.04);">
@@ -696,7 +1025,8 @@ page = st.sidebar.radio("اختر الصفحة:", [
     "📝 صفحة الرصد",
     "🏫 إدارة المدرسة وتقارير أولياء الأمور",
     "🁻 طباعة التقارير والتحليلات",
-    "👥 إدارة الطلاب (إضافة / حذف / نقل)"
+    "👥 إدارة الطلاب (إضافة / حذف / نقل)",
+    "📜 طباعة شهادات المعلمين (حضور / تقدير)"
 ])
 
 ### =========================================================
@@ -1649,3 +1979,110 @@ elif page == "👥 إدارة الطلاب (إضافة / حذف / نقل)":
             st.session_state["students_db"][target_grade][target_class].append(updated_st)
             st.success(f"✅ تم نقل الطالب **{selected_tr_obj['name']}** بنجاح إلى **{target_grade} - فصل ({target_class})**!")
             st.rerun()
+
+
+### =========================================================
+### الصفحة الخامسة: طباعة شهادات المعلمين (حضور / تقدير)
+### =========================================================
+elif page == "📜 طباعة شهادات المعلمين (حضور / تقدير)":
+    st.subheader("📜 نظام إصدار وطباعة شهادات المعلمين بالهوية الوطنية")
+    st.caption("تصميم رسمي معتمد لشهادات الشكر والتقدير وشهادات حضور الدورات التدريبية لمتوسطة الثغر النموذجية الأهلية.")
+
+    # قائمة المعلمين المعتمدة
+    teachers_list = [
+        "أ. صالح بن عبدالله الدعجاني",
+        "أ. محمد مبروك السيد",
+        "أ. محمد سامي السعيد",
+        "أ. عبدالرحمن بن خالد الغامدي",
+        "أ. سلطان بن فهد العتيبي",
+        "أ. عبدالله بن علي الشهري",
+        "أ. خالد بن أحمد الزهراني",
+        "أ. سعد بن محمد القحطاني",
+        "أ. يوسف بن إبراهيم الحازمي",
+        "أ. فهد بن عبدالعزيز السليمان",
+        "✍️ إضافة معلم جديد / كتابة اسم مخصص"
+    ]
+
+    col_t1, col_t2 = st.columns([2, 2])
+    with col_t1:
+        selected_teacher_raw = st.selectbox("👤 اختر اسم المعلم المكرم:", teachers_list)
+        if selected_teacher_raw == "✍️ إضافة معلم جديد / كتابة اسم مخصص":
+            teacher_name = st.text_input("أدخل اسم المعلم الثلاثي/الرباعي:", value="أ. محمد سامي السعيد")
+        else:
+            teacher_name = selected_teacher_raw
+
+    with col_t2:
+        cert_date_str = st.date_input("📅 تاريخ إصدار الشهادة:", value=date.today()).strftime("%Y-%m-%d")
+
+    st.markdown("---")
+
+    # تبويبات اختيار نوع الشهادة
+    tab_apprec, tab_attend = st.tabs(["🎖️ شهادة شكر وتقدير للمعلم", "🎓 شهادة حضور دورة تدريبية"])
+
+    # 1. شهادة الشكر والتقدير
+    with tab_apprec:
+        st.markdown("##### 🎖️ إعداد شهادة الشكر والتقدير")
+        col_a1, col_a2 = st.columns(2)
+        with col_a1:
+            subj_input = st.text_input("المادة / التخصص (اختياري):", value="الحاسب الآلي والتقنية", key="subj_in")
+        with col_a2:
+            reason_input = st.text_area("سبب التكريم والتقدير:", value="نظير جهوده المتميزة، وعطائه الدؤوب، وإسهاماته الفاعلة والريادية في إنجاح العملية التعليمية والتربوية بالمدرسة.", key="reason_in")
+
+        st.markdown("<br>", unsafe_allow_html=True)
+        col_btn1, col_btn2 = st.columns([2, 2])
+        
+        html_appreciation = generate_teacher_certificate_html(
+            cert_type="تقدير",
+            teacher_name=teacher_name,
+            date_str=cert_date_str,
+            reason=reason_input,
+            subject=subj_input
+        )
+
+        with col_btn1:
+            st.download_button(
+                label="📥 تنزيل وتصدير شهادة التقدير (HTML / جاهزة للطباعة PDF)",
+                data=html_appreciation,
+                file_name=f"Certificate_Appreciation_{teacher_name}.html",
+                mime="text/html",
+                use_container_width=True,
+                key="dl_apprec_btn"
+            )
+
+        st.markdown("---")
+        st.markdown("##### 👁️ معاينة شهادة التقدير الرسمية (عرض الطباعة):")
+        st.components.v1.html(html_appreciation, height=680, scrolling=True)
+
+    # 2. شهادة حضور دورة تدريبية
+    with tab_attend:
+        st.markdown("##### 🎓 إعداد شهادة حضور دورة تدريبية")
+        col_c1, col_c2 = st.columns(2)
+        with col_c1:
+            course_title_input = st.text_input("عنوان الدورة التدريبية / البرنامج:", value="دمج التقنية واستراتيجيات التعلم الذكي في التدريس", key="course_in")
+        with col_c2:
+            hours_input = st.text_input("عدد الساعات التدريبية:", value="15", key="hours_in")
+
+        st.markdown("<br>", unsafe_allow_html=True)
+        
+        html_attendance = generate_teacher_certificate_html(
+            cert_type="حضور",
+            teacher_name=teacher_name,
+            course_title=course_title_input,
+            hours=hours_input,
+            date_str=cert_date_str
+        )
+
+        col_cbtn1, col_cbtn2 = st.columns([2, 2])
+        with col_cbtn1:
+            st.download_button(
+                label="📥 تنزيل وتصدير شهادة الحضور (HTML / جاهزة للطباعة PDF)",
+                data=html_attendance,
+                file_name=f"Certificate_Attendance_{teacher_name}.html",
+                mime="text/html",
+                use_container_width=True,
+                key="dl_attend_btn"
+            )
+
+        st.markdown("---")
+        st.markdown("##### 👁️ معاينة شهادة حضور الدورة التدريبية (عرض الطباعة):")
+        st.components.v1.html(html_attendance, height=680, scrolling=True)
