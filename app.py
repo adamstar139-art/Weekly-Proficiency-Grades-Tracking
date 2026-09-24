@@ -5,6 +5,7 @@ import io
 import copy
 import urllib.parse
 import requests
+
 try:
     import plotly.express as px
     import plotly.graph_objects as go
@@ -12,9 +13,9 @@ try:
 except ImportError:
     _PLOTLY_AVAILABLE = False
 
-# =========================================================
-# 0. ربط قاعدة البيانات السحابية الدائمة (Supabase Cloud)
-# =========================================================
+### =========================================================
+### 0. ربط قاعدة البيانات السحابية الدائمة (Supabase Cloud)
+### =========================================================
 try:
     from supabase import create_client, Client
     _SUPABASE_LIB = True
@@ -35,7 +36,7 @@ def get_supabase():
     if not url and hasattr(st.secrets, "get"):
         url = st.secrets.get("url") or st.secrets.get("SUPABASE_URL")
     if not key and hasattr(st.secrets, "get"):
-        key = st.secrets.get("key") or st.secrets.get("SUPABASE_KEY") or sec.get("anon_key") if 'sec' in locals() else None
+        key = st.secrets.get("key") or st.secrets.get("SUPABASE_KEY") or (sec.get("anon_key") if 'sec' in locals() else None)
 
     if not url or not key:
         return None
@@ -51,9 +52,10 @@ def get_supabase():
 def supabase_ready():
     return get_supabase() is not None
 
-# =========================================================
-# 1. دوال قاعدة البيانات (Supabase Integration)
-# =========================================================
+### =========================================================
+### 1. دوال قاعدة البيانات (Supabase Integration)
+### =========================================================
+
 @st.cache_data(ttl=15, show_spinner=False)
 def fetch_all_grades_db(term, week):
     sb = get_supabase()
@@ -73,7 +75,7 @@ def save_grades_to_db(term, week, grades_list):
     try:
         for g in grades_list:
             sb.table("thaghr_grades").delete().eq("student_id", str(g['student_id'])).eq("term", term).eq("week", week).execute()
-        
+            
         payload = [{
             "student_id": str(g['student_id']),
             "term": term,
@@ -136,9 +138,10 @@ def delete_student_from_db(student_id):
     finally:
         st.cache_data.clear()
 
-# =========================================================
-# 2. دوال إرسال الرسائل (Mora SMS + WhatsApp Gateway API)
-# =========================================================
+### =========================================================
+### 2. دوال إرسال الرسائل (Mora SMS + WhatsApp Gateway API)
+### =========================================================
+
 def send_whatsapp_direct_api(phone, message, instance_id="", api_token=""):
     if not api_token or not instance_id:
         return False, "يرجى إدخال Instance ID و API Token الخاص بخدمة WhatsApp Gateway في القائمة الجانبية."
@@ -242,9 +245,9 @@ def generate_parent_message(student_name, score, is_absent):
             f"نشكر لكم حسن المتابعة والاهتمام، ونرجو الاستمرار في هذا الدعم المتبادل للحفاظ على هذا المستوى المتفوق. مع تحياتنا متوسطة الثغر النموذجية الأهلية."
         )
 
-# =========================================================
-# 3. قائمة الطلاب الأساسية وإدارتها في Session State
-# =========================================================
+### =========================================================
+### 3. قائمة الطلاب الأساسية وإدارتها في Session State
+### =========================================================
 INITIAL_STUDENTS_DB = {
     "الأول المتوسط": {
         1: [
@@ -442,9 +445,9 @@ if "students_db" not in st.session_state:
 
 STUDENTS_DB_GRADES = st.session_state["students_db"]
 
-# =========================================================
-# 4. إعداد واجهة التطبيق والتنسيق العربي
-# =========================================================
+### =========================================================
+### 4. إعداد واجهة التطبيق والتنسيق العربي (Modern Saudi UI)
+### =========================================================
 st.set_page_config(
     page_title="برنامج رصد الدرجات - متوسطة الثغر النموذجية الأهلية",
     page_icon="🏫",
@@ -452,104 +455,165 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
+# إضافة التنسيقات الجميلة الزمردية مع دعم الخط العربي Cairo والبطاقات الحديثة
 st.markdown("""
 <style>
-    /* RTL and Cairo Font Fixes */
-    html, body, [class*="css"], div, span, h1, h2, h3, h4, h5, h6, p, label, button, input {
-        font-family: 'Cairo', sans-serif !important;
-        direction: rtl !important;
-        text-align: right !important;
-    }
-    .main {
-        background-color: #f8fafc;
-    }
-    .stMarkdown, p, div {
-        line-height: 1.8 !important;
-    }
-    
-    /* Button Styling Fixes to prevent text wrapping/overlap */
-    .stButton>button {
-        border-radius: 8px !important;
-        font-weight: 700 !important;
-        font-family: 'Cairo', sans-serif !important;
-        padding: 8px 12px !important;
-        line-height: 1.5 !important;
-        width: 100% !important;
-        white-space: nowrap !important;
-        overflow: hidden !important;
-        text-overflow: ellipsis !important;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.05) !important;
-    }
-    .stButton>button:hover {
-        transform: translateY(-1px);
-        box-shadow: 0 4px 6px rgba(0,0,0,0.1) !important;
-    }
+/* 1. استدعاء خط Cairo العربي الحديث من Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;800;900&display=swap');
 
-    /* Expander Title Styling */
-    /* إصلاح تشابك وتباعد خطوط القوائم المنسدلة (st.expander) */
-    [data-testid="stExpander"] details summary p, 
-    [data-testid="stExpander"] summary,
-    .streamlit-expanderHeader {
-        direction: rtl !important;
-        text-align: right !important;
-        font-family: 'Cairo', sans-serif !important;
-        line-height: 1.8 !important;
-        font-size: 15px !important;
-        font-weight: 700 !important;
-        padding-top: 6px !important;
-        padding-bottom: 6px !important;
-    }
-    .streamlit-expanderHeader {
-        font-size: 15px !important;
-        font-weight: 700 !important;
-        color: #1e293b !important;
-        background-color: #f8fafc !important;
-        border-radius: 8px !important;
-        padding: 10px 15px !important;
-        border: 1px solid #e2e8f0 !important;
-    }
+/* 2. ضبط الخط العام والاتجاه الأيمن RTL للموقع ككل */
+html, body, [class*="css"], div, p, span, button, input, select, textarea {
+    font-family: 'Cairo', sans-serif !important;
+    direction: rtl !important;
+    text-align: right !important;
+}
 
-    .status-badge-ok {
-        background-color: #dcfce7;
-        color: #15803d;
-        padding: 6px 12px;
-        border-radius: 20px;
-        font-weight: bold;
-        font-size: 13px;
-        text-align: center;
-    }
-    .status-badge-off {
-        background-color: #fee2e2;
-        color: #b91c1c;
-        padding: 6px 12px;
-        border-radius: 20px;
-        font-weight: bold;
-        font-size: 13px;
-        text-align: center;
-    }
-    .report-card {
-        background: white;
-        border: 1px solid #e2e8f0;
-        border-radius: 12px;
-        padding: 22px;
-        margin-bottom: 22px;
-        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.03);
-    }
-    .report-title {
-        color: #005A2B;
-        font-weight: 800;
-        font-size: 20px;
-        margin-bottom: 15px;
-        border-bottom: 2px solid #005A2B;
-        padding-bottom: 8px;
-    }
+/* 3. خلفية الصفحة العامة */
+.stApp {
+    background-color: #f8fafc;
+}
+
+/* 4. تحسين شكل القائمة الجانبية (Sidebar) */
+[data-testid="stSidebar"] {
+    background-color: #ffffff !important;
+    border-left: 1px solid #e2e8f0;
+    box-shadow: -2px 0 12px rgba(0, 0, 0, 0.03);
+}
+
+/* 5. تحسين بطاقات الإحصائيات والمقاييس (st.metric) */
+[data-testid="stMetric"] {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    padding: 16px 20px;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+    transition: all 0.3s ease;
+    border-top: 4px solid #005A2B;
+}
+
+[data-testid="stMetric"]:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 20px rgba(0, 90, 43, 0.1);
+}
+
+[data-testid="stMetricLabel"] {
+    font-size: 14px !important;
+    font-weight: 700 !important;
+    color: #475569 !important;
+}
+
+[data-testid="stMetricValue"] {
+    font-size: 24px !important;
+    font-weight: 800 !important;
+    color: #005A2B !important;
+}
+
+/* 6. تحسين الأزرار الأساسية وأزرار الحفظ والإرسال */
+.stButton > button {
+    font-family: 'Cairo', sans-serif !important;
+    font-weight: 700 !important;
+    border-radius: 10px !important;
+    padding: 8px 22px !important;
+    transition: all 0.25s ease !important;
+    border: none !important;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.05) !important;
+}
+
+.stButton > button[kind="primary"], div.stFormSubmitButton > button {
+    background: linear-gradient(135deg, #005A2B 0%, #007A3D 100%) !important;
+    color: #ffffff !important;
+}
+
+.stButton > button[kind="primary"]:hover, div.stFormSubmitButton > button:hover {
+    background: linear-gradient(135deg, #007A3D 0%, #004D25 100%) !important;
+    box-shadow: 0 4px 14px rgba(0, 90, 43, 0.25) !important;
+    transform: translateY(-1px);
+}
+
+/* 7. تحسين تبويبات العرض (Tabs) */
+button[data-baseweb="tab"] {
+    font-family: 'Cairo', sans-serif !important;
+    font-weight: 700 !important;
+    font-size: 14px !important;
+    padding: 10px 18px !important;
+    border-radius: 8px !important;
+    color: #475569 !important;
+}
+
+button[aria-selected="true"] {
+    background-color: #005A2B !important;
+    color: #ffffff !important;
+}
+
+/* 8. شارات حالة الاتصال بـ Supabase */
+.status-badge-ok {
+    background-color: #dcfce7;
+    color: #166534;
+    padding: 8px 14px;
+    border-radius: 8px;
+    font-weight: 700;
+    font-size: 13px;
+    border: 1px solid #bbf7d0;
+    text-align: center;
+}
+
+.status-badge-off {
+    background-color: #fee2e2;
+    color: #991b1b;
+    padding: 8px 14px;
+    border-radius: 8px;
+    font-weight: 700;
+    font-size: 13px;
+    border: 1px solid #fecaca;
+    text-align: center;
+}
+
+/* 9. تحسين نموذج إدخال الدرجات والبطاقات */
+div[data-testid="stForm"] {
+    background: #ffffff;
+    padding: 24px;
+    border-radius: 14px;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.03);
+}
+
+.student-card {
+    background-color: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 10px 14px;
+    margin-bottom: 6px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+}
+
+/* 10. تحسين بطاقات التقارير المنسقة */
+.report-card {
+    background: #ffffff;
+    padding: 20px;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+    margin-bottom: 20px;
+}
+
+.report-title {
+    font-size: 20px;
+    font-weight: 800;
+    color: #005A2B;
+    margin-bottom: 10px;
+}
+
+/* 11. تحسين تنبيهات النظام */
+.stAlert {
+    border-radius: 10px !important;
+    font-weight: 600 !important;
+}
 </style>
 """, unsafe_allow_html=True)
 
-
-# =========================================================
-# 0.1 مكونات الترويسة والتوقيعات بالهوية السعودية
-# =========================================================
+### =========================================================
+### 0.1 مكونات الترويسة والتوقيعات بالهوية السعودية
+### =========================================================
 def render_saudi_header():
     st.markdown('''
     <div style="
@@ -602,10 +666,10 @@ def render_signatures_card():
     </div>
     ''', unsafe_allow_html=True)
 
-
-# الشريط الجانبي
+### =========================================================
+### الشريط الجانبي وتوجيه الصفحات
+### =========================================================
 st.sidebar.title("📌 القائمة الرئيسية")
-
 if supabase_ready():
     st.sidebar.markdown('<div class="status-badge-ok">🟢 متصل بقاعدة بيانات Supabase الدائمة</div>', unsafe_allow_html=True)
 else:
@@ -629,15 +693,15 @@ st.sidebar.markdown("---")
 render_saudi_header()
 
 page = st.sidebar.radio("اختر الصفحة:", [
-    "📝 صفحة الرصد", 
+    "📝 صفحة الرصد",
     "🏫 إدارة المدرسة وتقارير أولياء الأمور",
     "🁻 طباعة التقارير والتحليلات",
     "👥 إدارة الطلاب (إضافة / حذف / نقل)"
 ])
 
-# =========================================================
-# الصفحة الأولى: صفحة الرصد (RECORDING SHEET)
-# =========================================================
+### =========================================================
+### الصفحة الأولى: صفحة الرصد (RECORDING SHEET)
+### =========================================================
 if page == "📝 صفحة الرصد":
     st.subheader("📝 صفحة رصد درجات الإتقان الأسبوعية")
     
@@ -728,9 +792,9 @@ if page == "📝 صفحة الرصد":
         df_display = pd.DataFrame(table_rows)
         st.dataframe(df_display, use_container_width=True)
 
-# =========================================================
-# الصفحة الثانية: إدارة المدرسة وتقارير أولياء الأمور
-# =========================================================
+### =========================================================
+### الصفحة الثانية: إدارة المدرسة وتقارير أولياء الأمور
+### =========================================================
 elif page == "🏫 إدارة المدرسة وتقارير أولياء الأمور":
     st.subheader("🏫 إدارة المدرسة وإرسال وتقارير أولياء الأمور")
     
@@ -836,7 +900,6 @@ elif page == "🏫 إدارة المدرسة وتقارير أولياء الأ�
                 wa_manual_url = create_whatsapp_web_url(item['phone'], item['message'])
                 score_str = f"{item['score']}%" if item['is_absent'] == 0 else "غائب ⚪"
                 
-                # بطاقة الطالب التفاعلية المباشرة بديل ممتاز وشفاف يحل تداخل st.expander نهائياً
                 st.markdown(f'''
                 <details style="
                     background-color: #ffffff;
@@ -928,9 +991,9 @@ elif page == "🏫 إدارة المدرسة وتقارير أولياء الأ�
                     st.success(f"✅ تم تحديث رقم جوال الطالب {st_select} بنجاح في قاعدة البيانات السحابية!")
                     st.rerun()
 
-# =========================================================
-# الصفحة الثالثة: طباعة التقارير والتحليلات (جديدة)
-# =========================================================
+### =========================================================
+### الصفحة الثالثة: طباعة التقارير والتحليلات
+### =========================================================
 elif page == "🁻 طباعة التقارير والتحليلات":
     st.title("🁻 مركز التقارير المطبوعة وتحليل النواتج")
     st.markdown("اختر نوع التقرير المطلوب، وقم بتخصيص الخيارات لعرض التحليلات، التصدير إلى Excel وطباعة/تصدير PDF.")
@@ -946,7 +1009,6 @@ elif page == "🁻 طباعة التقارير والتحليلات":
     # جلب درجات الأسبوع المختار
     db_grades_list = fetch_all_grades_db(rep_term, rep_week)
     db_grades_map = {str(g['student_id']): g for g in db_grades_list}
-   
 
     # تجميع كلي للبيانات
     master_records = []
@@ -957,7 +1019,6 @@ elif page == "🁻 طباعة التقارير والتحليلات":
                 rec = db_grades_map.get(sid, {})
                 sc = rec.get("score", None)
                 is_abs = rec.get("is_absent", 0)
-               
                 
                 status_cat = "غير مرصود"
                 if is_abs == 1:
@@ -978,7 +1039,6 @@ elif page == "🁻 طباعة التقارير والتحليلات":
                     "الدرجة": sc if (sc is not None and is_abs == 0) else 0.0,
                     "الحالة": status_cat,
                     "غائب": "نعم" if is_abs == 1 else "لا",
-                  
                 })
                 
     df_master = pd.DataFrame(master_records)
@@ -997,133 +1057,228 @@ elif page == "🁻 طباعة التقارير والتحليلات":
             df.to_excel(writer, index=False, sheet_name=sheet_name)
         return output.getvalue()
 
-    # دالة مساعدة لتوليد صفحة HTML قابلة للطباعة PDF
+    # دالة مساعدة لتوليد صفحة HTML قابلة للطباعة PDF بتصميم مميز بالهوية السعودية
     def generate_html_report(title, subtitle, df_table, metrics_summary=None):
         table_html = df_table.to_html(classes="styled-table", index=False)
+        
+        # استبدال نصوص الفئات بشارات ملونة جذابة
+        table_html = table_html.replace('متميز (>75%) 🟢', '<span class="badge badge-green">متميز (>75%) 🟢</span>')
+        table_html = table_html.replace('متوسط (50-75%) 🔵', '<span class="badge badge-blue">متوسط (50-75%) 🔵</span>')
+        table_html = table_html.replace('ضعيف (<50%) 🔴', '<span class="badge badge-red">ضعيف (<50%) 🔴</span>')
+        table_html = table_html.replace('غائب ⚪', '<span class="badge badge-gray">غائب ⚪</span>')
+
         metrics_html = ""
         if metrics_summary:
             metrics_html = '<div class="metrics-container">'
             for k, v in metrics_summary.items():
-                metrics_html += f'<div class="metric-box"><div class="metric-val">{v}</div><div class="metric-lbl">{k}</div></div>'
+                metrics_html += f'''
+                <div class="metric-box">
+                    <div class="metric-val">{v}</div>
+                    <div class="metric-lbl">{k}</div>
+                </div>
+                '''
             metrics_html += '</div>'
 
         html_content = f"""<!DOCTYPE html>
-<html dir="rtl" lang="ar">
+<html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
     <title>{title}</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap');
+        
+        @page {{
+            size: A4 portrait;
+            margin: 10mm 12mm;
+        }}
+        
         body {{
-            font-family: 'Cairo', sans-serif;
+            font-family: 'Cairo', Arial, sans-serif;
             direction: rtl;
             text-align: right;
-            padding: 30px;
-            background-color: #fff;
             color: #1e293b;
-        }}
-        .header {{
-            text-align: center;
-            border-bottom: 3px double #005A2B;
-            padding-bottom: 15px;
-            margin-bottom: 25px;
-        }}
-        .header h1 {{
-            color: #005A2B;
-            margin: 0 0 8px 0;
-            font-size: 26px;
-        }}
-        .header h3 {{
-            color: #64748b;
+            background-color: #ffffff;
             margin: 0;
-            font-size: 16px;
+            padding: 0;
+            font-size: 12px;
+        }}
+        
+        /* الترويسة الرسمية */
+        .header-container {{
+            border-bottom: 3px solid #005A2B;
+            padding-bottom: 10px;
+            margin-bottom: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }}
+        .header-title {{
+            font-size: 18px;
+            font-weight: 800;
+            color: #005A2B;
+            margin-top: 3px;
+        }}
+        .header-sub {{
+            font-size: 11px;
+            color: #64748b;
             font-weight: 600;
         }}
+        .report-badge {{
+            background: #005A2B;
+            color: #ffffff;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 700;
+            border: 1px solid #D4AF37;
+            text-align: center;
+        }}
+
+        /* كروت الإحصائيات */
         .metrics-container {{
             display: flex;
-            justify-content: space-around;
-            margin-bottom: 25px;
-            gap: 15px;
+            gap: 10px;
+            margin-bottom: 16px;
         }}
         .metric-box {{
-            background: #f0fdf4;
-            border: 1px solid #bbf7d0;
-            border-radius: 8px;
-            padding: 12px 20px;
-            text-align: center;
             flex: 1;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-top: 4px solid #005A2B;
+            border-radius: 8px;
+            padding: 8px;
+            text-align: center;
         }}
         .metric-val {{
-            font-size: 22px;
+            font-size: 18px;
             font-weight: 800;
             color: #005A2B;
         }}
         .metric-lbl {{
-            font-size: 13px;
-            color: #475569;
-            font-weight: 600;
+            font-size: 11px;
+            color: #64748b;
+            font-weight: 700;
         }}
+
+        /* جدول البيانات المنسق */
         .styled-table {{
             width: 100%;
             border-collapse: collapse;
-            margin-top: 15px;
-            font-size: 14px;
+            margin-bottom: 20px;
+            font-size: 11px;
         }}
         .styled-table th {{
             background-color: #005A2B;
-            color: white;
-            padding: 10px;
-            border: 1px solid #005A2B;
+            color: #ffffff;
+            font-weight: 700;
+            padding: 8px 6px;
             text-align: center;
+            border: 1px solid #004D25;
         }}
         .styled-table td {{
-            padding: 8px 12px;
+            padding: 7px 6px;
             border: 1px solid #e2e8f0;
             text-align: center;
         }}
         .styled-table tr:nth-child(even) {{
             background-color: #f8fafc;
         }}
-        .footer {{
-            margin-top: 40px;
-            text-align: center;
+
+        /* الشارات الملونة للدرجات والحالات */
+        .badge {{
+            padding: 3px 8px;
+            border-radius: 6px;
+            font-weight: 700;
+            font-size: 10px;
+            display: inline-block;
+        }}
+        .badge-green {{ background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }}
+        .badge-blue {{ background: #dbeafe; color: #1e40af; border: 1px solid #bfdbfe; }}
+        .badge-red {{ background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }}
+        .badge-gray {{ background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; }}
+
+        /* قسم التوقيعات والاعتماد الرسمي */
+        .signatures-block {{
+            margin-top: 25px;
+            page-break-inside: avoid;
+        }}
+        .signatures-title {{
+            font-weight: 800;
+            color: #005A2B;
             font-size: 12px;
+            margin-bottom: 8px;
+            border-bottom: 1px solid #cbd5e1;
+            padding-bottom: 4px;
+        }}
+        .signatures-grid {{
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            text-align: center;
+        }}
+        .sig-box {{
+            flex: 1;
+            background: #f8fafc;
+            border: 1px dashed #cbd5e1;
+            border-radius: 8px;
+            padding: 8px;
+        }}
+        .sig-role {{ font-size: 10px; color: #64748b; font-weight: 700; }}
+        .sig-name {{ font-size: 12px; color: #0f172a; font-weight: 800; margin-top: 3px; }}
+
+        /* تذييل التقرير */
+        .footer {{
+            margin-top: 20px;
+            text-align: center;
+            font-size: 10px;
             color: #94a3b8;
             border-top: 1px solid #e2e8f0;
-            padding-top: 10px;
-        }}
-        @media print {{
-            .no-print {{ display: none; }}
-            body {{ padding: 0; }}
+            padding-top: 6px;
         }}
     </style>
 </head>
 <body>
-    <div class="header">
-        <h1>🏫 متوسطة الثغر النموذجية الأهلية</h1>
-        <h3>{title} - {subtitle}</h3>
-        <p style="font-size:12px; color:#64748b; margin-top:5px;">تاريخ التقرير: {datetime.now().strftime('%Y-%m-%d')}</p>
+    <!-- الترويسة -->
+    <div class="header-container">
+        <div>
+            <div class="header-sub">المملكة العربية السعودية • وزارة التعليم</div>
+            <div class="header-sub">إدارة التعليم بمنطقة الرياض | مكتب التعليم الخاص</div>
+            <div class="header-title">متوسطة الثغر النموذجية الأهلية</div>
+        </div>
+        <div>
+            <div class="report-badge">{title}</div>
+            <div style="font-size: 11px; color: #64748b; text-align: center; margin-top: 4px; font-weight: 600;">{subtitle}</div>
+        </div>
     </div>
+
+    <!-- الإحصائيات الموجزة -->
     {metrics_html}
+
+    <!-- جدول البيانات -->
     {table_html}
-    
-    <div style="display: flex; justify-content: space-between; margin-top: 40px; margin-bottom: 25px; text-align: center; gap: 15px;">
-        <div style="flex: 1; padding: 12px; border-top: 2px solid #005A2B; background: #f8fafc; border-radius: 6px;">
-            <div style="font-size: 13px; font-weight: 700; color: #005A2B;">وكيل شؤون الطلاب</div>
-            <div style="font-size: 15px; font-weight: 800; margin-top: 6px; color: #1e293b;">صالح بن عبدالله الدعجاني</div>
-        </div>
-        <div style="flex: 1; padding: 12px; border-top: 2px solid #005A2B; background: #f8fafc; border-radius: 6px;">
-            <div style="font-size: 13px; font-weight: 700; color: #005A2B;">وكيل الشؤون التعليمية</div>
-            <div style="font-size: 15px; font-weight: 800; margin-top: 6px; color: #1e293b;">محمد مبروك السيد</div>
-        </div>
-        <div style="flex: 1; padding: 12px; border-top: 2px solid #005A2B; background: #f8fafc; border-radius: 6px;">
-            <div style="font-size: 13px; font-weight: 700; color: #005A2B;">مدير المدرسة</div>
-            <div style="font-size: 15px; font-weight: 800; margin-top: 6px; color: #1e293b;">إبراهيم بن موسى التميمي</div>
+
+    <!-- قسم الاعتماد والتوقيعات -->
+    <div class="signatures-block">
+        <div class="signatures-title">✍️ الاعتماد والتوقيعات الرسمية للقيادة المدرسية</div>
+        <div class="signatures-grid">
+            <div class="sig-box">
+                <div class="sig-role">وكيل شؤون الطلاب</div>
+                <div class="sig-name">أ/ صالح بن عبدالله الدعجاني</div>
+            </div>
+            <div class="sig-box">
+                <div class="sig-role">وكيل الشؤون التعليمية</div>
+                <div class="sig-name">أ/ محمد مبروك السيد</div>
+            </div>
+            <div class="sig-box">
+                <div class="sig-role">مدير المدرسة</div>
+                <div class="sig-name">أ/ إبراهيم بن موسى التميمي</div>
+            </div>
         </div>
     </div>
-    
+
+    <!-- التذييل -->
     <div class="footer">
-       - تصميم وتطوير أ/ محمد سامي السعيد  &&  تم استخراج هذا التقرير آلياً من نظام إدارة درجات مدرسة الثغر النموذجية
+        تصميم وتطوير أ/ محمد سامي السعيد &nbsp;|&nbsp; تم استخراج هذا التقرير آلياً من نظام إدارة درجات مدرسة الثغر النموذجية
     </div>
 </body>
 </html>"""
@@ -1374,9 +1529,9 @@ elif page == "🁻 طباعة التقارير والتحليلات":
             st.download_button("🖨️ طباعة / تصدير تقرير تحليل النواتج PDF", data=html_o_rep, file_name=f"Outcomes_Analysis_{rep_week}.html", mime="text/html", use_container_width=True)
         st.markdown("</div>", unsafe_allow_html=True)
 
-# =========================================================
-# الصفحة الرابعة: إدارة الطلاب (إضافة / حذف / نقل) (جديدة)
-# =========================================================
+### =========================================================
+### الصفحة الرابعة: إدارة الطلاب (إضافة / حذف / نقل)
+### =========================================================
 elif page == "👥 إدارة الطلاب (إضافة / حذف / نقل)":
     st.title("👥 صفحة إدارة بيانات الطلاب")
     st.markdown("يمكنك من خلال هذه الصفحة **إضافة طالب جديد**، **حذف طالب**، أو **نقل طالب من فصل إلى آخر** بكل سهولة مع الحفظ المباشر.")
@@ -1407,13 +1562,11 @@ elif page == "👥 إدارة الطلاب (إضافة / حذف / نقل)":
                     st.error("⚠️ يرجى ملء كافة البيانات المطلوبة (الهوية، الاسم، الجوال).")
                 else:
                     new_id_clean = str(new_id).strip()
-                    # إضافة إلى st.session_state
                     if new_grade not in st.session_state["students_db"]:
                         st.session_state["students_db"][new_grade] = {}
                     if new_class not in st.session_state["students_db"][new_grade]:
                         st.session_state["students_db"][new_grade][new_class] = []
                     
-                    # التحقق من عدم التكرار
                     existing_ids = [str(st_item["id"]) for g in st.session_state["students_db"].values() for c in g.values() for st_item in c]
                     if new_id_clean in existing_ids:
                         st.warning("⚠️ رقم الهوية هذا موجود بالفعل لطالب آخر!")
@@ -1425,7 +1578,6 @@ elif page == "👥 إدارة الطلاب (إضافة / حذف / نقل)":
                             "class": new_class,
                             "phone": str(new_phone).strip()
                         })
-                        # تحديث Supabase إذا كان متصلاً
                         update_student_phone_db(new_id_clean, new_phone.strip())
                         st.success(f"✅ تم إضافة الطالب **{new_name}** بنجاح إلى **{new_grade} - فصل ({new_class})**!")
                         st.rerun()
@@ -1451,11 +1603,9 @@ elif page == "👥 إدارة الطلاب (إضافة / حذف / نقل)":
             
             st.error(f"⚠️ **تنبيه:** سيتم حذف الطالب **{selected_st_obj['name']}** نهائياً من المدرسة وقاعدة البيانات.")
             if st.button("🗑️ تأكيد حذف الطالب نهائياً"):
-                # حذف من Session State
                 st.session_state["students_db"][del_grade][del_class] = [
                     s for s in st.session_state["students_db"][del_grade][del_class] if str(s["id"]) != str(selected_st_obj["id"])
                 ]
-                # حذف من Supabase إذا كان متصلاً
                 delete_student_from_db(selected_st_obj["id"])
                 st.success(f"✅ تم حذف الطالب {selected_st_obj['name']} بنجاح.")
                 st.rerun()
@@ -1484,11 +1634,9 @@ elif page == "👥 إدارة الطلاب (إضافة / حذف / نقل)":
             target_class = st.selectbox("إلى فصل:", [1, 2, 3], key="tgt_c_select")
             
         if selected_tr_obj and st.button("🔄 تأكيد نقل الطالب الآن"):
-            # 1. إزالة من المكان الحالي
             st.session_state["students_db"][src_grade][src_class] = [
                 s for s in st.session_state["students_db"][src_grade][src_class] if str(s["id"]) != str(selected_tr_obj["id"])
             ]
-            # 2. إضافة إلى المكان الجديد
             if target_grade not in st.session_state["students_db"]:
                 st.session_state["students_db"][target_grade] = {}
             if target_class not in st.session_state["students_db"][target_grade]:
